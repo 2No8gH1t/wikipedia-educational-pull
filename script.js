@@ -27,11 +27,69 @@ const educationalCategories = [
     'Engineering',
     'Art',
     'Music',
-    'Architecture'
+    'Architecture',
+    'Astronomy',
+    'Psychology',
+    'Sociology',
+    'Anthropology',
+    'Economics',
+    'Political Science',
+    'Linguistics',
+    'Archaeology',
+    'Geology',
+    'Meteorology',
+    'Oceanography',
+    'Botany',
+    'Zoology',
+    'Neuroscience',
+    'Computer Science',
+    'Environmental Science',
+    'Astrophysics',
+    'Biochemistry',
+    'Genetics',
+    'Paleontology',
+    'Theology',
+    'Mythology',
+    'Classical Studies',
+    'Cultural Studies',
+    'Film Studies',
+    'Theater',
+    'Dance',
+    'Photography',
+    'Design',
+    'Fashion',
+    'Culinary Arts',
+    'Sports Science',
+    'Public Health',
+    'Epidemiology',
+    'Veterinary Medicine',
+    'Dentistry',
+    'Nursing',
+    'Pharmacy',
+    'Law',
+    'Business',
+    'Finance',
+    'Marketing',
+    'Journalism',
+    'Communication',
+    'Media Studies',
+    'International Relations',
+    'Military History',
+    'World War',
+    'Ancient History',
+    'Medieval History',
+    'Renaissance',
+    'Industrial Revolution',
+    'Space Exploration',
+    'Invention',
+    'Innovation',
+    'Biography',
+    'Autobiography',
+    'Memoir'
 ];
 
 let attemptCount = 0;
-const maxAttempts = 10;
+const maxAttempts = 3; // Reduced from 10 to 3 for faster loading
 
 async function fetchRandomArticle() {
     // Show loading state
@@ -52,10 +110,10 @@ async function fetchRandomArticle() {
         
         const data = await response.json();
         
-        // Check if the article seems educational (simple heuristic)
-        // You can enhance this with actual category checking if needed
+        // Check if the article seems educational (more lenient filter)
         const isLikelyEducational = checkIfEducational(data);
         
+        // Accept article if educational OR if we've tried multiple times (show something rather than keep retrying)
         if (!isLikelyEducational && attemptCount < maxAttempts) {
             attemptCount++;
             // Retry if not educational
@@ -80,17 +138,32 @@ async function fetchRandomArticle() {
 }
 
 function checkIfEducational(data) {
-    // Simple heuristic: check if the title or extract contains educational keywords
+    // More comprehensive check using the educational categories list
     const text = (data.title + ' ' + (data.extract || '')).toLowerCase();
+    
+    // Check against the full educational categories list
+    const categoryMatch = educationalCategories.some(category => 
+        text.includes(category.toLowerCase())
+    );
+    
+    // Also check for common educational keywords (more lenient)
     const educationalKeywords = [
         'education', 'learn', 'study', 'science', 'history', 'mathematics',
         'physics', 'chemistry', 'biology', 'geography', 'literature',
         'philosophy', 'technology', 'medicine', 'engineering', 'art',
-        'music', 'theory', 'concept', 'principle', 'method', 'system'
+        'music', 'theory', 'concept', 'principle', 'method', 'system',
+        'research', 'academic', 'scholar', 'university', 'college', 'school',
+        'discovery', 'invention', 'analysis', 'study', 'field', 'discipline',
+        'knowledge', 'information', 'fact', 'data', 'evidence', 'study'
     ];
     
-    // Check if at least one keyword is present
-    return educationalKeywords.some(keyword => text.includes(keyword));
+    const keywordMatch = educationalKeywords.some(keyword => text.includes(keyword));
+    
+    // Accept if it matches categories OR keywords (more lenient)
+    // Also accept if extract is substantial (likely educational content)
+    const hasSubstantialContent = data.extract && data.extract.length > 200;
+    
+    return categoryMatch || keywordMatch || hasSubstantialContent;
 }
 
 function formatSummaryAsResearchArticle(paragraphs, container) {
