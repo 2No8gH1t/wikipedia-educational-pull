@@ -588,11 +588,52 @@
         }
 
         async function fetchExtendedContent(title, pageid) {
-            // Use MediaWiki API to get the full article extract with maximum content
-            // exintro=false means include all sections, not just intro
-            // explaintext=true gives plain text without HTML
-            // exsectionformat=plain ensures sections are preserved
-            // exlimit=max tries to get maximum content (though API may still limit very long articles)
+            // Try multiple approaches to get the most comprehensive content
+            
+            // Approach 1: Try Wikipedia REST API HTML endpoint for full content
+            try {
+                const encodedTitle = encodeURIComponent(title);
+                const htmlUrl = `https://en.wikipedia.org/api/rest_v1/page/html/${encodedTitle}`;
+                const htmlResponse = await fetch(htmlUrl);
+                
+                if (htmlResponse.ok) {
+                    const html = await htmlResponse.text();
+                    // Parse HTML to extract text content from all sections
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Remove navigation, references, and other non-content elements
+                    const toRemove = doc.querySelectorAll('nav, .reference, .mw-references-wrap, .navbox, .infobox, .thumb, .mw-editsection, .mw-cite-backlink');
+                    toRemove.forEach(el => el.remove());
+                    
+                    // Get all paragraph content from all sections
+                    // Get main content area
+                    const mainContent = doc.querySelector('body') || doc;
+                    
+                    // Get all paragraphs, including those in sections
+                    const allParagraphs = Array.from(mainContent.querySelectorAll('p'))
+                        .map(p => {
+                            // Get text content, handling nested elements
+                            let text = p.textContent.trim();
+                            // Remove citation numbers like [1], [2], etc.
+                            text = text.replace(/\[\d+\]/g, '');
+                            return text;
+                        })
+                        .filter(text => text.length > 50 && !text.match(/^\[edit\]$/i)) // Filter out very short paragraphs and edit links
+                        .filter((text, index, arr) => arr.indexOf(text) === index); // Remove duplicates
+                    
+                    const fullContent = allParagraphs.join('\n\n');
+                    
+                    if (fullContent && fullContent.length > 1000) {
+                        return fullContent;
+                    }
+                }
+            } catch (htmlError) {
+                console.log('HTML fetch failed, trying extract API:', htmlError);
+            }
+            
+            // Approach 2: Use MediaWiki API with maximum extract settings
+            // Try to get as much content as possible
             const mwApiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&pageids=${pageid}&prop=extracts&exintro=false&explaintext=true&exsectionformat=plain&exlimit=max&origin=*`;
             
             try {
