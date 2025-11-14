@@ -588,9 +588,12 @@
         }
 
         async function fetchExtendedContent(title, pageid) {
-            // Use MediaWiki API to get a much longer extract (up to 60 sentences for more details)
-            // This will give us significantly more content than the summary endpoint
-            const mwApiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&pageids=${pageid}&prop=extracts&exintro=false&explaintext=true&exsentences=60&origin=*`;
+            // Use MediaWiki API to get the full article extract (no sentence limit)
+            // This includes all sections and expandable content from the article
+            // exintro=false means include all sections, not just intro
+            // explaintext=true gives plain text without HTML
+            // No exsentences limit means we get the full article
+            const mwApiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&pageids=${pageid}&prop=extracts&exintro=false&explaintext=true&exsectionformat=plain&origin=*`;
             
             try {
                 const mwResponse = await fetch(mwApiUrl);
