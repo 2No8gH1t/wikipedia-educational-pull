@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Educational Wikipedia</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,13 +14,13 @@
         }
 
         body {
-            font-family: "Times New Roman", Times, serif;
-            background: #c0c0c0;
-            background-image: 
-                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,.05) 10px, rgba(0,0,0,.05) 20px);
+            font-family: 'Crimson Text', 'Times New Roman', serif;
+            background: #2c1810 url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%232c1810"/><path d="M0 0L100 100M100 0L0 100" stroke="%233d2417" stroke-width="0.5" opacity="0.3"/></svg>');
+            background-size: 50px 50px;
             min-height: 100vh;
             padding: 20px;
-            color: #000000;
+            color: #3d2417;
+            line-height: 1.7;
         }
 
         .container {
@@ -28,81 +30,125 @@
 
         header {
             text-align: center;
-            color: #000080;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #d4d0c8;
-            border: 2px outset #d4d0c8;
+            margin-bottom: 30px;
+            padding: 35px 25px;
+            background: linear-gradient(to bottom, #f4e4bc 0%, #e8d5a3 100%);
+            border: 4px double #8b4513;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+
+        header::before {
+            content: '⚔';
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            opacity: 0.6;
+        }
+
+        header::after {
+            content: '⚔';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            opacity: 0.6;
         }
 
         header h1 {
-            font-size: 24pt;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #000080;
+            font-family: 'Cinzel', serif;
+            font-size: 36px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #5c2e0a;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 2px;
         }
 
         .subtitle {
-            font-size: 12pt;
-            color: #000000;
+            font-size: 18px;
+            color: #6b4423;
+            font-weight: 400;
+            font-style: italic;
         }
 
         main {
-            background: #ffffff;
-            border: 3px inset #808080;
-            padding: 20px;
-            background-color: #c0c0c0;
+            background: linear-gradient(to bottom, #f9f1e0 0%, #f4e4bc 100%);
+            border: 3px solid #8b4513;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        main::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 69, 19, 0.03) 2px, rgba(139, 69, 19, 0.03) 4px);
+            pointer-events: none;
+            border-radius: 5px;
         }
 
         .fetch-button {
             width: 100%;
-            padding: 8px 15px;
-            font-size: 11pt;
-            font-weight: normal;
-            color: #000000;
-            background: #d4d0c8;
-            border: 2px outset #d4d0c8;
-            border-top-color: #ffffff;
-            border-left-color: #ffffff;
-            border-right-color: #808080;
-            border-bottom-color: #808080;
+            padding: 16px 24px;
+            font-size: 18px;
+            font-weight: 600;
+            font-family: 'Cinzel', serif;
+            color: #f4e4bc;
+            background: linear-gradient(to bottom, #5c2e0a 0%, #3d2417 100%);
+            border: 3px solid #8b4513;
+            border-radius: 6px;
             cursor: pointer;
-            font-family: "MS Sans Serif", Arial, sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            text-align: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .fetch-button::before {
+            content: '🎲';
+            font-size: 20px;
         }
 
         .fetch-button:hover:not(:disabled) {
-            border: 2px inset #d4d0c8;
-            border-top-color: #808080;
-            border-left-color: #808080;
-            border-right-color: #ffffff;
-            border-bottom-color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            background: linear-gradient(to bottom, #6b4423 0%, #5c2e0a 100%);
         }
 
         .fetch-button:active:not(:disabled) {
-            border: 2px inset #d4d0c8;
-            border-top-color: #808080;
-            border-left-color: #808080;
-            border-right-color: #ffffff;
-            border-bottom-color: #ffffff;
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .fetch-button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
 
         .loader {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #808080;
-            border-top-color: #000000;
-            border-right-color: #000000;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(244, 228, 188, 0.3);
+            border-top-color: #f4e4bc;
+            border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
 
@@ -115,101 +161,119 @@
         }
 
         .article-container {
-            background: #ffffff;
-            border: 2px inset #808080;
-            padding: 15px;
-            margin-top: 15px;
-            background-color: #ffffff;
+            background: linear-gradient(to bottom, #faf5eb 0%, #f4e4bc 100%);
+            border: 3px solid #8b4513;
+            border-radius: 8px;
+            padding: 30px;
+            margin-top: 25px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .article-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 69, 19, 0.02) 2px, rgba(139, 69, 19, 0.02) 4px);
+            pointer-events: none;
+            border-radius: 5px;
         }
 
         .article-header {
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #000000;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px double #8b4513;
+            position: relative;
         }
 
         .article-header h2 {
-            font-size: 16pt;
-            color: #000000;
-            margin-bottom: 8px;
+            font-family: 'Cinzel', serif;
+            font-size: 32px;
+            color: #5c2e0a;
+            margin-bottom: 15px;
             line-height: 1.3;
-            font-weight: bold;
-            font-family: Arial, sans-serif;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .wiki-link {
-            color: #0000ff;
-            text-decoration: underline;
-            font-weight: normal;
-            display: inline-block;
-            font-size: 10pt;
+            color: #6b4423;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            border-bottom: 1px dotted #8b4513;
         }
 
         .wiki-link:hover {
-            color: #800080;
+            color: #8b4513;
+            text-decoration: none;
+            border-bottom: 1px solid #8b4513;
         }
 
         .wiki-link:visited {
-            color: #800080;
+            color: #6b4423;
         }
 
         .article-content {
-            margin-bottom: 15px;
+            margin-bottom: 25px;
             overflow: hidden;
+            position: relative;
         }
 
         .article-image {
             max-width: 300px;
             width: 100%;
             height: auto;
-            border: 2px inset #808080;
+            border: 3px solid #8b4513;
+            border-radius: 4px;
             float: right;
-            margin: 0 0 15px 15px;
+            margin: 0 0 20px 20px;
             object-fit: cover;
-            background: #ffffff;
-            padding: 2px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            background: #faf5eb;
         }
 
         .summary {
-            font-size: 11pt;
-            line-height: 1.5;
-            color: #000000;
+            font-size: 17px;
+            line-height: 1.8;
+            color: #3d2417;
             text-align: left;
-            font-family: "Times New Roman", Times, serif;
         }
 
         .summary p {
-            margin-bottom: 12px;
-            text-indent: 0;
+            margin-bottom: 18px;
         }
 
         .summary p:last-child {
             margin-bottom: 0;
         }
 
-        .summary p:first-child {
-            font-size: 12pt;
-            font-weight: bold;
-            color: #000000;
-            line-height: 1.5;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #808080;
-        }
-
         .summary-section {
-            margin-bottom: 15px;
+            margin-bottom: 30px;
+            position: relative;
         }
 
         .summary-section h3 {
-            font-size: 13pt;
-            font-weight: bold;
-            color: #000000;
-            margin-bottom: 8px;
-            margin-top: 15px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #000000;
-            font-family: Arial, sans-serif;
+            font-family: 'Cinzel', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #5c2e0a;
+            margin-bottom: 15px;
+            margin-top: 30px;
+            padding-bottom: 10px;
+            border-bottom: 3px double #8b4513;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
         }
 
         .summary-section:first-child h3 {
@@ -217,31 +281,35 @@
         }
 
         .summary-section p {
-            margin-bottom: 10px;
-            line-height: 1.5;
+            margin-bottom: 16px;
+            line-height: 1.8;
+            color: #3d2417;
         }
 
         .summary-section ul {
-            margin: 10px 0;
-            padding-left: 30px;
+            margin: 16px 0;
+            padding-left: 35px;
         }
 
         .summary-section li {
-            margin-bottom: 5px;
-            line-height: 1.5;
+            margin-bottom: 10px;
+            line-height: 1.8;
+            color: #3d2417;
         }
 
         .summary-highlight {
-            background: #d4d0c8;
-            padding: 10px;
-            border: 2px inset #808080;
-            margin: 15px 0;
+            background: linear-gradient(to bottom, #e8d5a3 0%, #d4c19a 100%);
+            padding: 25px;
+            border: 2px solid #8b4513;
+            border-radius: 6px;
+            margin: 25px 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .summary-highlight p {
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #000000;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #5c2e0a;
         }
 
         .summary-highlight p:last-child {
@@ -250,57 +318,81 @@
 
         .article-meta {
             display: flex;
-            gap: 20px;
-            padding-top: 10px;
-            border-top: 1px solid #808080;
-            font-size: 9pt;
-            color: #000000;
+            gap: 30px;
+            padding-top: 25px;
+            border-top: 2px double #8b4513;
+            font-size: 14px;
+            color: #6b4423;
             flex-wrap: wrap;
-            font-family: "MS Sans Serif", Arial, sans-serif;
+            position: relative;
         }
 
         .meta-item {
             display: flex;
-            gap: 5px;
+            gap: 8px;
+        }
+
+        .meta-item strong {
+            color: #5c2e0a;
+            font-weight: 700;
         }
 
         .error-message {
-            background: #ffffff;
-            color: #ff0000;
-            padding: 10px;
-            border: 2px inset #808080;
-            margin-top: 15px;
-            font-weight: bold;
+            background: #f4e4bc;
+            color: #8b0000;
+            padding: 18px;
+            border: 3px solid #8b0000;
+            border-radius: 6px;
+            margin-top: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            header {
+                padding: 25px 15px;
+                margin-bottom: 20px;
+            }
+
+            header::before,
+            header::after {
+                display: none;
+            }
+
             header h1 {
-                font-size: 18pt;
+                font-size: 28px;
             }
             
             main {
-                padding: 15px;
+                padding: 20px;
             }
             
             .article-header h2 {
-                font-size: 14pt;
+                font-size: 24px;
             }
             
             .article-image {
                 float: none;
-                margin: 0 0 15px 0;
+                margin: 0 0 20px 0;
                 width: 100%;
                 max-width: 100%;
             }
             
             .summary {
-                font-size: 10pt;
-                line-height: 1.4;
+                font-size: 16px;
+            }
+
+            .summary-section h3 {
+                font-size: 20px;
             }
             
             .article-meta {
                 flex-direction: column;
-                gap: 5px;
+                gap: 12px;
             }
         }
     </style>
@@ -437,7 +529,7 @@
         ];
 
         let attemptCount = 0;
-        const maxAttempts = 3; // Reduced from 10 to 3 for faster loading
+        const maxAttempts = 1; // Only 1 retry for maximum speed
 
         async function fetchRandomArticle() {
             // Show loading state
@@ -459,16 +551,26 @@
                 const data = await response.json();
                 
                 // Check if the article seems educational (more lenient filter)
-                const isLikelyEducational = checkIfEducational(data);
+                const shouldReject = checkIfEducational(data);
                 
-                // Accept article if educational OR if we've tried multiple times (show something rather than keep retrying)
-                if (!isLikelyEducational && attemptCount < maxAttempts) {
+                // Only retry once if we should reject, otherwise show immediately
+                if (shouldReject && attemptCount < maxAttempts) {
                     attemptCount++;
-                    // Retry if not educational
                     return fetchRandomArticle();
                 }
                 
                 attemptCount = 0;
+                
+                // Fetch additional content for a longer summary
+                try {
+                    const extendedContent = await fetchExtendedContent(data.title, data.pageid);
+                    if (extendedContent && extendedContent.length > data.extract.length) {
+                        data.extract = extendedContent;
+                    }
+                } catch (extError) {
+                    console.log('Could not fetch extended content, using summary:', extError);
+                    // Continue with original extract if extended fetch fails
+                }
                 
                 // Display the article
                 displayArticle(data);
@@ -485,109 +587,298 @@
             }
         }
 
+        async function fetchExtendedContent(title, pageid) {
+            // Use MediaWiki API to get a much longer extract (up to 60 sentences for more details)
+            // This will give us significantly more content than the summary endpoint
+            const mwApiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&pageids=${pageid}&prop=extracts&exintro=false&explaintext=true&exsentences=60&origin=*`;
+            
+            try {
+                const mwResponse = await fetch(mwApiUrl);
+                if (!mwResponse.ok) {
+                    throw new Error('MediaWiki API request failed');
+                }
+                
+                const mwData = await mwResponse.json();
+                if (mwData.query && mwData.query.pages && mwData.query.pages[pageid]) {
+                    const extract = mwData.query.pages[pageid].extract;
+                    if (extract && extract.trim().length > 0) {
+                        return extract;
+                    }
+                }
+            } catch (error) {
+                console.log('Error fetching extended content:', error);
+            }
+            
+            return null;
+        }
+
         function checkIfEducational(data) {
             // More comprehensive check using the educational categories list
             const text = (data.title + ' ' + (data.extract || '')).toLowerCase();
             
-            // Check against the full educational categories list
-            const categoryMatch = educationalCategories.some(category => 
-                text.includes(category.toLowerCase())
-            );
-            
-            // Also check for common educational keywords (more lenient)
-            const educationalKeywords = [
-                'education', 'learn', 'study', 'science', 'history', 'mathematics',
-                'physics', 'chemistry', 'biology', 'geography', 'literature',
-                'philosophy', 'technology', 'medicine', 'engineering', 'art',
-                'music', 'theory', 'concept', 'principle', 'method', 'system',
-                'research', 'academic', 'scholar', 'university', 'college', 'school',
-                'discovery', 'invention', 'analysis', 'study', 'field', 'discipline',
-                'knowledge', 'information', 'fact', 'data', 'evidence', 'study'
+            // Only reject if it's clearly not educational (disambiguation, very short, etc.)
+            const rejectPatterns = [
+                'disambiguation',
+                'list of',
+                'category:',
+                'template:',
+                'file:',
+                'user:',
+                'wikipedia:',
+                'help:'
             ];
             
-            const keywordMatch = educationalKeywords.some(keyword => text.includes(keyword));
+            // Reject if title matches reject patterns
+            const shouldReject = rejectPatterns.some(pattern => 
+                data.title.toLowerCase().includes(pattern)
+            );
             
-            // Accept if it matches categories OR keywords (more lenient)
-            // Also accept if extract is substantial (likely educational content)
-            const hasSubstantialContent = data.extract && data.extract.length > 200;
+            // Also reject if extract is too short (likely a stub)
+            const isTooShort = !data.extract || data.extract.length < 100;
             
-            return categoryMatch || keywordMatch || hasSubstantialContent;
+            // Accept almost everything - only reject obvious non-content pages
+            return shouldReject || (isTooShort && attemptCount === 0);
         }
 
         function formatSummaryAsResearchArticle(paragraphs, container) {
             if (paragraphs.length === 0) return;
             
-            // First paragraph is the introduction/overview - format as highlighted intro
-            const introDiv = document.createElement('div');
-            introDiv.className = 'summary-highlight';
+            // Introduction Section - State what the topic is and why it's interesting
+            const introSection = document.createElement('div');
+            introSection.className = 'summary-section';
+            const introH3 = document.createElement('h3');
+            introH3.textContent = 'Introduction';
+            introSection.appendChild(introH3);
+            
             const introP = document.createElement('p');
             introP.textContent = paragraphs[0].trim();
-            introDiv.appendChild(introP);
-            container.appendChild(introDiv);
+            introSection.appendChild(introP);
+            container.appendChild(introSection);
             
             // If there's only one paragraph, we're done
             if (paragraphs.length === 1) return;
             
-            // Remaining paragraphs organized into sections
+            // Remaining paragraphs organized into research article sections
             let remainingParagraphs = paragraphs.slice(1);
             
-            // Determine content structure based on paragraph count and content
-            if (remainingParagraphs.length >= 3) {
-                // Three or more paragraphs: create structured sections
+            // Determine how to distribute paragraphs across sections
+            // Format: Introduction, Key Concepts and Methods, Important Information and Findings, Significance and Implications
+            const totalRemaining = remainingParagraphs.length;
+            
+            if (totalRemaining >= 5) {
+                // Five or more paragraphs: distribute across four sections including More Details
+                const paragraphsPerSection = Math.floor(totalRemaining / 4);
+                const remainder = totalRemaining % 4;
                 
-                // Overview/Background section (middle paragraphs)
-                const midPoint = Math.floor(remainingParagraphs.length / 2);
-                const overviewParagraphs = remainingParagraphs.slice(0, midPoint);
+                // Key Concepts and Methods Section (first section)
+                const methodStart = 0;
+                const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
+                const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
                 
-                if (overviewParagraphs.length > 0) {
-                    const overviewSection = document.createElement('div');
-                    overviewSection.className = 'summary-section';
-                    const overviewH3 = document.createElement('h3');
-                    overviewH3.textContent = 'Overview and Key Concepts';
-                    overviewSection.appendChild(overviewH3);
+                if (methodParagraphs.length > 0) {
+                    const methodSection = document.createElement('div');
+                    methodSection.className = 'summary-section';
+                    const methodH3 = document.createElement('h3');
+                    methodH3.textContent = 'Key Concepts and Methods';
+                    methodSection.appendChild(methodH3);
                     
-                    overviewParagraphs.forEach(para => {
+                    methodParagraphs.forEach(para => {
                         const p = document.createElement('p');
                         p.textContent = para.trim();
-                        overviewSection.appendChild(p);
+                        methodSection.appendChild(p);
                     });
                     
-                    container.appendChild(overviewSection);
+                    container.appendChild(methodSection);
                 }
                 
-                // Significance/Findings section (remaining paragraphs)
-                const findingsParagraphs = remainingParagraphs.slice(midPoint);
+                // Important Information and Findings Section (second section)
+                const resultsStart = methodEnd;
+                const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
+                const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
                 
-                if (findingsParagraphs.length > 0) {
-                    const findingsSection = document.createElement('div');
-                    findingsSection.className = 'summary-section';
-                    const findingsH3 = document.createElement('h3');
-                    findingsH3.textContent = 'Significance and Implications';
-                    findingsSection.appendChild(findingsH3);
+                if (resultsParagraphs.length > 0) {
+                    const resultsSection = document.createElement('div');
+                    resultsSection.className = 'summary-section';
+                    const resultsH3 = document.createElement('h3');
+                    resultsH3.textContent = 'Important Information and Findings';
+                    resultsSection.appendChild(resultsH3);
                     
-                    findingsParagraphs.forEach(para => {
+                    resultsParagraphs.forEach(para => {
                         const p = document.createElement('p');
                         p.textContent = para.trim();
-                        findingsSection.appendChild(p);
+                        resultsSection.appendChild(p);
                     });
                     
-                    container.appendChild(findingsSection);
+                    container.appendChild(resultsSection);
                 }
+                
+                // Significance and Implications Section (third section)
+                const discussionStart = resultsEnd;
+                const discussionEnd = discussionStart + paragraphsPerSection + (remainder > 2 ? 1 : 0);
+                const discussionParagraphs = remainingParagraphs.slice(discussionStart, discussionEnd);
+                
+                if (discussionParagraphs.length > 0) {
+                    const discussionSection = document.createElement('div');
+                    discussionSection.className = 'summary-section';
+                    const discussionH3 = document.createElement('h3');
+                    discussionH3.textContent = 'Significance and Implications';
+                    discussionSection.appendChild(discussionH3);
+                    
+                    discussionParagraphs.forEach(para => {
+                        const p = document.createElement('p');
+                        p.textContent = para.trim();
+                        discussionSection.appendChild(p);
+                    });
+                    
+                    container.appendChild(discussionSection);
+                }
+                
+                // More Details Section (remaining paragraphs)
+                const detailsParagraphs = remainingParagraphs.slice(discussionEnd);
+                
+                if (detailsParagraphs.length > 0) {
+                    const detailsSection = document.createElement('div');
+                    detailsSection.className = 'summary-section';
+                    const detailsH3 = document.createElement('h3');
+                    detailsH3.textContent = 'More Details';
+                    detailsSection.appendChild(detailsH3);
+                    
+                    detailsParagraphs.forEach(para => {
+                        const p = document.createElement('p');
+                        p.textContent = para.trim();
+                        detailsSection.appendChild(p);
+                    });
+                    
+                    container.appendChild(detailsSection);
+                }
+            } else if (totalRemaining >= 4) {
+                // Four paragraphs: distribute across three sections
+                const paragraphsPerSection = Math.floor(totalRemaining / 3);
+                const remainder = totalRemaining % 3;
+                
+                // Key Concepts and Methods Section
+                const methodStart = 0;
+                const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
+                const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
+                
+                if (methodParagraphs.length > 0) {
+                    const methodSection = document.createElement('div');
+                    methodSection.className = 'summary-section';
+                    const methodH3 = document.createElement('h3');
+                    methodH3.textContent = 'Key Concepts and Methods';
+                    methodSection.appendChild(methodH3);
+                    
+                    methodParagraphs.forEach(para => {
+                        const p = document.createElement('p');
+                        p.textContent = para.trim();
+                        methodSection.appendChild(p);
+                    });
+                    
+                    container.appendChild(methodSection);
+                }
+                
+                // Important Information and Findings Section
+                const resultsStart = methodEnd;
+                const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
+                const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
+                
+                if (resultsParagraphs.length > 0) {
+                    const resultsSection = document.createElement('div');
+                    resultsSection.className = 'summary-section';
+                    const resultsH3 = document.createElement('h3');
+                    resultsH3.textContent = 'Important Information and Findings';
+                    resultsSection.appendChild(resultsH3);
+                    
+                    resultsParagraphs.forEach(para => {
+                        const p = document.createElement('p');
+                        p.textContent = para.trim();
+                        resultsSection.appendChild(p);
+                    });
+                    
+                    container.appendChild(resultsSection);
+                }
+                
+                // Significance and Implications Section
+                const discussionParagraphs = remainingParagraphs.slice(resultsEnd);
+                
+                if (discussionParagraphs.length > 0) {
+                    const discussionSection = document.createElement('div');
+                    discussionSection.className = 'summary-section';
+                    const discussionH3 = document.createElement('h3');
+                    discussionH3.textContent = 'Significance and Implications';
+                    discussionSection.appendChild(discussionH3);
+                    
+                    discussionParagraphs.forEach(para => {
+                        const p = document.createElement('p');
+                        p.textContent = para.trim();
+                        discussionSection.appendChild(p);
+                    });
+                    
+                    container.appendChild(discussionSection);
+                }
+            } else if (totalRemaining === 3) {
+                // Three paragraphs: one for each section
+                const methodSection = document.createElement('div');
+                methodSection.className = 'summary-section';
+                const methodH3 = document.createElement('h3');
+                methodH3.textContent = 'Key Concepts and Methods';
+                methodSection.appendChild(methodH3);
+                const methodP = document.createElement('p');
+                methodP.textContent = remainingParagraphs[0].trim();
+                methodSection.appendChild(methodP);
+                container.appendChild(methodSection);
+                
+                const resultsSection = document.createElement('div');
+                resultsSection.className = 'summary-section';
+                const resultsH3 = document.createElement('h3');
+                resultsH3.textContent = 'Important Information and Findings';
+                resultsSection.appendChild(resultsH3);
+                const resultsP = document.createElement('p');
+                resultsP.textContent = remainingParagraphs[1].trim();
+                resultsSection.appendChild(resultsP);
+                container.appendChild(resultsSection);
+                
+                const discussionSection = document.createElement('div');
+                discussionSection.className = 'summary-section';
+                const discussionH3 = document.createElement('h3');
+                discussionH3.textContent = 'Significance and Implications';
+                discussionSection.appendChild(discussionH3);
+                const discussionP = document.createElement('p');
+                discussionP.textContent = remainingParagraphs[2].trim();
+                discussionSection.appendChild(discussionP);
+                container.appendChild(discussionSection);
+            } else if (totalRemaining === 2) {
+                // Two paragraphs: Key Concepts and Methods, Important Information and Findings
+                const methodSection = document.createElement('div');
+                methodSection.className = 'summary-section';
+                const methodH3 = document.createElement('h3');
+                methodH3.textContent = 'Key Concepts and Methods';
+                methodSection.appendChild(methodH3);
+                const methodP = document.createElement('p');
+                methodP.textContent = remainingParagraphs[0].trim();
+                methodSection.appendChild(methodP);
+                container.appendChild(methodSection);
+                
+                const resultsSection = document.createElement('div');
+                resultsSection.className = 'summary-section';
+                const resultsH3 = document.createElement('h3');
+                resultsH3.textContent = 'Important Information and Findings';
+                resultsSection.appendChild(resultsH3);
+                const resultsP = document.createElement('p');
+                resultsP.textContent = remainingParagraphs[1].trim();
+                resultsSection.appendChild(resultsP);
+                container.appendChild(resultsSection);
             } else {
-                // Fewer paragraphs: format as simple paragraphs with a "Details" section
-                const detailsSection = document.createElement('div');
-                detailsSection.className = 'summary-section';
-                const detailsH3 = document.createElement('h3');
-                detailsH3.textContent = 'Key Information';
-                detailsSection.appendChild(detailsH3);
-                
-                remainingParagraphs.forEach(para => {
-                    const p = document.createElement('p');
-                    p.textContent = para.trim();
-                    detailsSection.appendChild(p);
-                });
-                
-                container.appendChild(detailsSection);
+                // One remaining paragraph: Key Concepts and Methods
+                const methodSection = document.createElement('div');
+                methodSection.className = 'summary-section';
+                const methodH3 = document.createElement('h3');
+                methodH3.textContent = 'Key Concepts and Methods';
+                methodSection.appendChild(methodH3);
+                const methodP = document.createElement('p');
+                methodP.textContent = remainingParagraphs[0].trim();
+                methodSection.appendChild(methodP);
+                container.appendChild(methodSection);
             }
         }
 

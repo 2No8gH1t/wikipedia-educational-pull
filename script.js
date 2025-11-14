@@ -89,7 +89,7 @@ const educationalCategories = [
 ];
 
 let attemptCount = 0;
-const maxAttempts = 3; // Reduced from 10 to 3 for faster loading
+const maxAttempts = 1; // Only 1 retry for maximum speed
 
 async function fetchRandomArticle() {
     // Show loading state
@@ -110,17 +110,27 @@ async function fetchRandomArticle() {
         
         const data = await response.json();
         
-        // Check if the article seems educational (more lenient filter)
-        const isLikelyEducational = checkIfEducational(data);
+        // Very lenient filter - only reject obvious non-educational content
+        const shouldReject = checkIfShouldReject(data);
         
-        // Accept article if educational OR if we've tried multiple times (show something rather than keep retrying)
-        if (!isLikelyEducational && attemptCount < maxAttempts) {
+        // Only retry once if we should reject, otherwise show immediately
+        if (shouldReject && attemptCount < maxAttempts) {
             attemptCount++;
-            // Retry if not educational
             return fetchRandomArticle();
         }
         
         attemptCount = 0;
+        
+        // Fetch additional content for a longer summary
+        try {
+            const extendedContent = await fetchExtendedContent(data.title, data.pageid);
+            if (extendedContent && extendedContent.length > data.extract.length) {
+                data.extract = extendedContent;
+            }
+        } catch (extError) {
+            console.log('Could not fetch extended content, using summary:', extError);
+            // Continue with original extract if extended fetch fails
+        }
         
         // Display the article
         displayArticle(data);
@@ -137,109 +147,298 @@ async function fetchRandomArticle() {
     }
 }
 
-function checkIfEducational(data) {
-    // More comprehensive check using the educational categories list
+async function fetchExtendedContent(title, pageid) {
+    // Use MediaWiki API to get a much longer extract (up to 60 sentences for more details)
+    // This will give us significantly more content than the summary endpoint
+    const mwApiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&pageids=${pageid}&prop=extracts&exintro=false&explaintext=true&exsentences=60&origin=*`;
+    
+    try {
+        const mwResponse = await fetch(mwApiUrl);
+        if (!mwResponse.ok) {
+            throw new Error('MediaWiki API request failed');
+        }
+        
+        const mwData = await mwResponse.json();
+        if (mwData.query && mwData.query.pages && mwData.query.pages[pageid]) {
+            const extract = mwData.query.pages[pageid].extract;
+            if (extract && extract.trim().length > 0) {
+                return extract;
+            }
+        }
+    } catch (error) {
+        console.log('Error fetching extended content:', error);
+    }
+    
+    return null;
+}
+
+function checkIfShouldReject(data) {
+    // Very lenient - only reject obvious non-educational content
     const text = (data.title + ' ' + (data.extract || '')).toLowerCase();
     
-    // Check against the full educational categories list
-    const categoryMatch = educationalCategories.some(category => 
-        text.includes(category.toLowerCase())
-    );
-    
-    // Also check for common educational keywords (more lenient)
-    const educationalKeywords = [
-        'education', 'learn', 'study', 'science', 'history', 'mathematics',
-        'physics', 'chemistry', 'biology', 'geography', 'literature',
-        'philosophy', 'technology', 'medicine', 'engineering', 'art',
-        'music', 'theory', 'concept', 'principle', 'method', 'system',
-        'research', 'academic', 'scholar', 'university', 'college', 'school',
-        'discovery', 'invention', 'analysis', 'study', 'field', 'discipline',
-        'knowledge', 'information', 'fact', 'data', 'evidence', 'study'
+    // Only reject if it's clearly not educational (disambiguation, very short, etc.)
+    const rejectPatterns = [
+        'disambiguation',
+        'list of',
+        'category:',
+        'template:',
+        'file:',
+        'user:',
+        'wikipedia:',
+        'help:'
     ];
     
-    const keywordMatch = educationalKeywords.some(keyword => text.includes(keyword));
+    // Reject if title matches reject patterns
+    const shouldReject = rejectPatterns.some(pattern => 
+        data.title.toLowerCase().includes(pattern)
+    );
     
-    // Accept if it matches categories OR keywords (more lenient)
-    // Also accept if extract is substantial (likely educational content)
-    const hasSubstantialContent = data.extract && data.extract.length > 200;
+    // Also reject if extract is too short (likely a stub)
+    const isTooShort = !data.extract || data.extract.length < 100;
     
-    return categoryMatch || keywordMatch || hasSubstantialContent;
+    // Accept almost everything - only reject obvious non-content pages
+    return shouldReject || (isTooShort && attemptCount === 0);
 }
 
 function formatSummaryAsResearchArticle(paragraphs, container) {
     if (paragraphs.length === 0) return;
     
-    // First paragraph is the introduction/overview - format as highlighted intro
-    const introDiv = document.createElement('div');
-    introDiv.className = 'summary-highlight';
+    // Introduction Section - State what the topic is and why it's interesting
+    const introSection = document.createElement('div');
+    introSection.className = 'summary-section';
+    const introH3 = document.createElement('h3');
+    introH3.textContent = 'Introduction';
+    introSection.appendChild(introH3);
+    
     const introP = document.createElement('p');
     introP.textContent = paragraphs[0].trim();
-    introDiv.appendChild(introP);
-    container.appendChild(introDiv);
+    introSection.appendChild(introP);
+    container.appendChild(introSection);
     
     // If there's only one paragraph, we're done
     if (paragraphs.length === 1) return;
     
-    // Remaining paragraphs organized into sections
+    // Remaining paragraphs organized into research article sections
+    // Format: Introduction, Key Concepts and Methods, Important Information and Findings, Significance and Implications
     let remainingParagraphs = paragraphs.slice(1);
     
-    // Determine content structure based on paragraph count and content
-    if (remainingParagraphs.length >= 3) {
-        // Three or more paragraphs: create structured sections
+    // Determine how to distribute paragraphs across sections
+    const totalRemaining = remainingParagraphs.length;
+    
+    if (totalRemaining >= 5) {
+        // Five or more paragraphs: distribute across four sections including More Details
+        const paragraphsPerSection = Math.floor(totalRemaining / 4);
+        const remainder = totalRemaining % 4;
         
-        // Overview/Background section (middle paragraphs)
-        const midPoint = Math.floor(remainingParagraphs.length / 2);
-        const overviewParagraphs = remainingParagraphs.slice(0, midPoint);
+        // Key Concepts and Methods Section (first section)
+        const methodStart = 0;
+        const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
+        const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
         
-        if (overviewParagraphs.length > 0) {
-            const overviewSection = document.createElement('div');
-            overviewSection.className = 'summary-section';
-            const overviewH3 = document.createElement('h3');
-            overviewH3.textContent = 'Overview and Key Concepts';
-            overviewSection.appendChild(overviewH3);
+        if (methodParagraphs.length > 0) {
+            const methodSection = document.createElement('div');
+            methodSection.className = 'summary-section';
+            const methodH3 = document.createElement('h3');
+            methodH3.textContent = 'Key Concepts and Methods';
+            methodSection.appendChild(methodH3);
             
-            overviewParagraphs.forEach(para => {
+            methodParagraphs.forEach(para => {
                 const p = document.createElement('p');
                 p.textContent = para.trim();
-                overviewSection.appendChild(p);
+                methodSection.appendChild(p);
             });
             
-            container.appendChild(overviewSection);
+            container.appendChild(methodSection);
         }
         
-        // Significance/Findings section (remaining paragraphs)
-        const findingsParagraphs = remainingParagraphs.slice(midPoint);
+        // Important Information and Findings Section (second section)
+        const resultsStart = methodEnd;
+        const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
+        const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
         
-        if (findingsParagraphs.length > 0) {
-            const findingsSection = document.createElement('div');
-            findingsSection.className = 'summary-section';
-            const findingsH3 = document.createElement('h3');
-            findingsH3.textContent = 'Significance and Implications';
-            findingsSection.appendChild(findingsH3);
+        if (resultsParagraphs.length > 0) {
+            const resultsSection = document.createElement('div');
+            resultsSection.className = 'summary-section';
+            const resultsH3 = document.createElement('h3');
+            resultsH3.textContent = 'Important Information and Findings';
+            resultsSection.appendChild(resultsH3);
             
-            findingsParagraphs.forEach(para => {
+            resultsParagraphs.forEach(para => {
                 const p = document.createElement('p');
                 p.textContent = para.trim();
-                findingsSection.appendChild(p);
+                resultsSection.appendChild(p);
             });
             
-            container.appendChild(findingsSection);
+            container.appendChild(resultsSection);
         }
+        
+        // Significance and Implications Section (third section)
+        const discussionStart = resultsEnd;
+        const discussionEnd = discussionStart + paragraphsPerSection + (remainder > 2 ? 1 : 0);
+        const discussionParagraphs = remainingParagraphs.slice(discussionStart, discussionEnd);
+        
+        if (discussionParagraphs.length > 0) {
+            const discussionSection = document.createElement('div');
+            discussionSection.className = 'summary-section';
+            const discussionH3 = document.createElement('h3');
+            discussionH3.textContent = 'Significance and Implications';
+            discussionSection.appendChild(discussionH3);
+            
+            discussionParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                discussionSection.appendChild(p);
+            });
+            
+            container.appendChild(discussionSection);
+        }
+        
+        // More Details Section (remaining paragraphs)
+        const detailsParagraphs = remainingParagraphs.slice(discussionEnd);
+        
+        if (detailsParagraphs.length > 0) {
+            const detailsSection = document.createElement('div');
+            detailsSection.className = 'summary-section';
+            const detailsH3 = document.createElement('h3');
+            detailsH3.textContent = 'More Details';
+            detailsSection.appendChild(detailsH3);
+            
+            detailsParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                detailsSection.appendChild(p);
+            });
+            
+            container.appendChild(detailsSection);
+        }
+    } else if (totalRemaining >= 4) {
+        // Four paragraphs: distribute across three sections
+        const paragraphsPerSection = Math.floor(totalRemaining / 3);
+        const remainder = totalRemaining % 3;
+        
+        // Key Concepts and Methods Section
+        const methodStart = 0;
+        const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
+        const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
+        
+        if (methodParagraphs.length > 0) {
+            const methodSection = document.createElement('div');
+            methodSection.className = 'summary-section';
+            const methodH3 = document.createElement('h3');
+            methodH3.textContent = 'Key Concepts and Methods';
+            methodSection.appendChild(methodH3);
+            
+            methodParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                methodSection.appendChild(p);
+            });
+            
+            container.appendChild(methodSection);
+        }
+        
+        // Important Information and Findings Section
+        const resultsStart = methodEnd;
+        const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
+        const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
+        
+        if (resultsParagraphs.length > 0) {
+            const resultsSection = document.createElement('div');
+            resultsSection.className = 'summary-section';
+            const resultsH3 = document.createElement('h3');
+            resultsH3.textContent = 'Important Information and Findings';
+            resultsSection.appendChild(resultsH3);
+            
+            resultsParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                resultsSection.appendChild(p);
+            });
+            
+            container.appendChild(resultsSection);
+        }
+        
+        // Significance and Implications Section
+        const discussionParagraphs = remainingParagraphs.slice(resultsEnd);
+        
+        if (discussionParagraphs.length > 0) {
+            const discussionSection = document.createElement('div');
+            discussionSection.className = 'summary-section';
+            const discussionH3 = document.createElement('h3');
+            discussionH3.textContent = 'Significance and Implications';
+            discussionSection.appendChild(discussionH3);
+            
+            discussionParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                discussionSection.appendChild(p);
+            });
+            
+            container.appendChild(discussionSection);
+        }
+    } else if (totalRemaining === 3) {
+        // Three paragraphs: one for each section
+        const methodSection = document.createElement('div');
+        methodSection.className = 'summary-section';
+        const methodH3 = document.createElement('h3');
+        methodH3.textContent = 'Key Concepts and Methods';
+        methodSection.appendChild(methodH3);
+        const methodP = document.createElement('p');
+        methodP.textContent = remainingParagraphs[0].trim();
+        methodSection.appendChild(methodP);
+        container.appendChild(methodSection);
+        
+        const resultsSection = document.createElement('div');
+        resultsSection.className = 'summary-section';
+        const resultsH3 = document.createElement('h3');
+        resultsH3.textContent = 'Important Information and Findings';
+        resultsSection.appendChild(resultsH3);
+        const resultsP = document.createElement('p');
+        resultsP.textContent = remainingParagraphs[1].trim();
+        resultsSection.appendChild(resultsP);
+        container.appendChild(resultsSection);
+        
+        const discussionSection = document.createElement('div');
+        discussionSection.className = 'summary-section';
+        const discussionH3 = document.createElement('h3');
+        discussionH3.textContent = 'Significance and Implications';
+        discussionSection.appendChild(discussionH3);
+        const discussionP = document.createElement('p');
+        discussionP.textContent = remainingParagraphs[2].trim();
+        discussionSection.appendChild(discussionP);
+        container.appendChild(discussionSection);
+    } else if (totalRemaining === 2) {
+        // Two paragraphs: Key Concepts and Methods, Important Information and Findings
+        const methodSection = document.createElement('div');
+        methodSection.className = 'summary-section';
+        const methodH3 = document.createElement('h3');
+        methodH3.textContent = 'Key Concepts and Methods';
+        methodSection.appendChild(methodH3);
+        const methodP = document.createElement('p');
+        methodP.textContent = remainingParagraphs[0].trim();
+        methodSection.appendChild(methodP);
+        container.appendChild(methodSection);
+        
+        const resultsSection = document.createElement('div');
+        resultsSection.className = 'summary-section';
+        const resultsH3 = document.createElement('h3');
+        resultsH3.textContent = 'Important Information and Findings';
+        resultsSection.appendChild(resultsH3);
+        const resultsP = document.createElement('p');
+        resultsP.textContent = remainingParagraphs[1].trim();
+        resultsSection.appendChild(resultsP);
+        container.appendChild(resultsSection);
     } else {
-        // Fewer paragraphs: format as simple paragraphs with a "Details" section
-        const detailsSection = document.createElement('div');
-        detailsSection.className = 'summary-section';
-        const detailsH3 = document.createElement('h3');
-        detailsH3.textContent = 'Key Information';
-        detailsSection.appendChild(detailsH3);
-        
-        remainingParagraphs.forEach(para => {
-            const p = document.createElement('p');
-            p.textContent = para.trim();
-            detailsSection.appendChild(p);
-        });
-        
-        container.appendChild(detailsSection);
+        // One remaining paragraph: Key Concepts and Methods
+        const methodSection = document.createElement('div');
+        methodSection.className = 'summary-section';
+        const methodH3 = document.createElement('h3');
+        methodH3.textContent = 'Key Concepts and Methods';
+        methodSection.appendChild(methodH3);
+        const methodP = document.createElement('p');
+        methodP.textContent = remainingParagraphs[0].trim();
+        methodSection.appendChild(methodP);
+        container.appendChild(methodSection);
     }
 }
 
