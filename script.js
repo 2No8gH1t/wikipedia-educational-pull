@@ -148,12 +148,12 @@ async function fetchRandomArticle() {
 }
 
 async function fetchExtendedContent(title, pageid) {
-    // Use MediaWiki API to get the full article extract (no sentence limit)
-    // This includes all sections and expandable content from the article
+    // Use MediaWiki API to get the full article extract with maximum content
     // exintro=false means include all sections, not just intro
     // explaintext=true gives plain text without HTML
-    // No exsentences limit means we get the full article
-    const mwApiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&pageids=${pageid}&prop=extracts&exintro=false&explaintext=true&exsectionformat=plain&origin=*`;
+    // exsectionformat=plain ensures sections are preserved
+    // exlimit=max tries to get maximum content (though API may still limit very long articles)
+    const mwApiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&pageids=${pageid}&prop=extracts&exintro=false&explaintext=true&exsectionformat=plain&exlimit=max&origin=*`;
     
     try {
         const mwResponse = await fetch(mwApiUrl);
@@ -228,10 +228,10 @@ function formatSummaryAsResearchArticle(paragraphs, container) {
     // Determine how to distribute paragraphs across sections
     const totalRemaining = remainingParagraphs.length;
     
-    if (totalRemaining >= 5) {
-        // Five or more paragraphs: distribute across four sections including More Details
-        const paragraphsPerSection = Math.floor(totalRemaining / 4);
-        const remainder = totalRemaining % 4;
+    if (totalRemaining >= 8) {
+        // Eight or more paragraphs: distribute across five sections for maximum depth
+        const paragraphsPerSection = Math.floor(totalRemaining / 5);
+        const remainder = totalRemaining % 5;
         
         // Key Concepts and Methods Section (first section)
         const methodStart = 0;
@@ -296,7 +296,114 @@ function formatSummaryAsResearchArticle(paragraphs, container) {
             container.appendChild(discussionSection);
         }
         
-        // More Details Section (remaining paragraphs)
+        // More Details Section (fourth section)
+        const detailsStart = discussionEnd;
+        const detailsEnd = detailsStart + paragraphsPerSection + (remainder > 3 ? 1 : 0);
+        const detailsParagraphs = remainingParagraphs.slice(detailsStart, detailsEnd);
+        
+        if (detailsParagraphs.length > 0) {
+            const detailsSection = document.createElement('div');
+            detailsSection.className = 'summary-section';
+            const detailsH3 = document.createElement('h3');
+            detailsH3.textContent = 'More Details';
+            detailsSection.appendChild(detailsH3);
+            
+            detailsParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                detailsSection.appendChild(p);
+            });
+            
+            container.appendChild(detailsSection);
+        }
+        
+        // Additional Context and Analysis Section (remaining paragraphs for maximum depth)
+        const additionalParagraphs = remainingParagraphs.slice(detailsEnd);
+        
+        if (additionalParagraphs.length > 0) {
+            const additionalSection = document.createElement('div');
+            additionalSection.className = 'summary-section';
+            const additionalH3 = document.createElement('h3');
+            additionalH3.textContent = 'Additional Context and Analysis';
+            additionalSection.appendChild(additionalH3);
+            
+            additionalParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                additionalSection.appendChild(p);
+            });
+            
+            container.appendChild(additionalSection);
+        }
+    } else if (totalRemaining >= 5) {
+        // Five to seven paragraphs: distribute across four sections including More Details
+        const paragraphsPerSection = Math.floor(totalRemaining / 4);
+        const remainder = totalRemaining % 4;
+        
+        // Key Concepts and Methods Section
+        const methodStart = 0;
+        const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
+        const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
+        
+        if (methodParagraphs.length > 0) {
+            const methodSection = document.createElement('div');
+            methodSection.className = 'summary-section';
+            const methodH3 = document.createElement('h3');
+            methodH3.textContent = 'Key Concepts and Methods';
+            methodSection.appendChild(methodH3);
+            
+            methodParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                methodSection.appendChild(p);
+            });
+            
+            container.appendChild(methodSection);
+        }
+        
+        // Important Information and Findings Section
+        const resultsStart = methodEnd;
+        const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
+        const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
+        
+        if (resultsParagraphs.length > 0) {
+            const resultsSection = document.createElement('div');
+            resultsSection.className = 'summary-section';
+            const resultsH3 = document.createElement('h3');
+            resultsH3.textContent = 'Important Information and Findings';
+            resultsSection.appendChild(resultsH3);
+            
+            resultsParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                resultsSection.appendChild(p);
+            });
+            
+            container.appendChild(resultsSection);
+        }
+        
+        // Significance and Implications Section
+        const discussionStart = resultsEnd;
+        const discussionEnd = discussionStart + paragraphsPerSection + (remainder > 2 ? 1 : 0);
+        const discussionParagraphs = remainingParagraphs.slice(discussionStart, discussionEnd);
+        
+        if (discussionParagraphs.length > 0) {
+            const discussionSection = document.createElement('div');
+            discussionSection.className = 'summary-section';
+            const discussionH3 = document.createElement('h3');
+            discussionH3.textContent = 'Significance and Implications';
+            discussionSection.appendChild(discussionH3);
+            
+            discussionParagraphs.forEach(para => {
+                const p = document.createElement('p');
+                p.textContent = para.trim();
+                discussionSection.appendChild(p);
+            });
+            
+            container.appendChild(discussionSection);
+        }
+        
+        // More Details Section
         const detailsParagraphs = remainingParagraphs.slice(discussionEnd);
         
         if (detailsParagraphs.length > 0) {
