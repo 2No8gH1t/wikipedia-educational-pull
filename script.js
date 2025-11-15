@@ -240,8 +240,84 @@ function checkIfShouldReject(data) {
     // Also reject if extract is too short (likely a stub)
     const isTooShort = !data.extract || data.extract.length < 100;
     
-    // Accept almost everything - only reject obvious non-content pages
-    return shouldReject || (isTooShort && attemptCount === 0);
+    // Reject biographical articles about specific individuals
+    const isBiographical = checkIfBiographical(data);
+    
+    // Accept almost everything - only reject obvious non-content pages and biographies
+    return shouldReject || (isTooShort && attemptCount === 0) || isBiographical;
+}
+
+function checkIfBiographical(data) {
+    // Check if the article is about a specific individual (biography)
+    const title = data.title;
+    const extract = (data.extract || '').toLowerCase();
+    const fullText = (title + ' ' + extract).toLowerCase();
+    
+    // Biographical indicators in the content
+    const biographicalIndicators = [
+        'was born',
+        'was an',
+        'is an',
+        'is a',
+        'born in',
+        'died in',
+        'died on',
+        'lived from',
+        'was a',
+        'is known for',
+        'was known for',
+        'was the',
+        'is the',
+        'served as',
+        'worked as',
+        'attended',
+        'graduated from',
+        'married',
+        'had children',
+        'was married to',
+        'was the son of',
+        'was the daughter of',
+        'was born to',
+        'grew up in',
+        'studied at',
+        'received',
+        'won the',
+        'awarded',
+        'career',
+        'early life',
+        'personal life',
+        'later life',
+        'death',
+        'legacy'
+    ];
+    
+    // Check if extract contains multiple biographical indicators (likely a biography)
+    const biographicalCount = biographicalIndicators.filter(indicator => 
+        extract.includes(indicator)
+    ).length;
+    
+    // If 3 or more biographical indicators, it's likely a biography
+    if (biographicalCount >= 3) {
+        return true;
+    }
+    
+    // Check if title looks like a person's name (First Last format, but not common phrases)
+    // Simple heuristic: if title has 2-4 words and extract starts with biographical language
+    const titleWords = title.split(' ').filter(w => w.length > 0);
+    const looksLikeName = titleWords.length >= 2 && titleWords.length <= 4;
+    
+    // If it looks like a name AND has biographical content, reject it
+    if (looksLikeName && biographicalCount >= 2) {
+        return true;
+    }
+    
+    // Check for very strong biographical opening (most biographies start this way)
+    const strongBiographicalStart = extract.match(/^(was|is|born|died|lived|served|worked|studied|received|won|awarded)/);
+    if (strongBiographicalStart && looksLikeName) {
+        return true;
+    }
+    
+    return false;
 }
 
 function formatSummaryAsResearchArticle(paragraphs, container) {
@@ -263,272 +339,17 @@ function formatSummaryAsResearchArticle(paragraphs, container) {
     if (paragraphs.length === 1) return;
     
     // Remaining paragraphs organized into research article sections
-    // Format: Introduction, Key Concepts and Methods, Important Information and Findings, Significance and Implications
+    // Since we limit to 4 paragraphs max, we'll have at most 3 remaining
     let remainingParagraphs = paragraphs.slice(1);
     
-    // Determine how to distribute paragraphs across sections
-    const totalRemaining = remainingParagraphs.length;
+    // Simplified logic for shorter summaries (max 4 paragraphs total)
+    // 1 paragraph: Introduction only (already done)
+    // 2 paragraphs: Introduction + Key Concepts
+    // 3 paragraphs: Introduction + Key Concepts + Important Information
+    // 4 paragraphs: Introduction + Key Concepts + Important Information + Significance
     
-    if (totalRemaining >= 8) {
-        // Eight or more paragraphs: distribute across five sections for maximum depth
-        const paragraphsPerSection = Math.floor(totalRemaining / 5);
-        const remainder = totalRemaining % 5;
-        
-        // Key Concepts and Methods Section (first section)
-        const methodStart = 0;
-        const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
-        const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
-        
-        if (methodParagraphs.length > 0) {
-            const methodSection = document.createElement('div');
-            methodSection.className = 'summary-section';
-            const methodH3 = document.createElement('h3');
-            methodH3.textContent = 'Key Concepts and Methods';
-            methodSection.appendChild(methodH3);
-            
-            methodParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                methodSection.appendChild(p);
-            });
-            
-            container.appendChild(methodSection);
-        }
-        
-        // Important Information and Findings Section (second section)
-        const resultsStart = methodEnd;
-        const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
-        const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
-        
-        if (resultsParagraphs.length > 0) {
-            const resultsSection = document.createElement('div');
-            resultsSection.className = 'summary-section';
-            const resultsH3 = document.createElement('h3');
-            resultsH3.textContent = 'Important Information and Findings';
-            resultsSection.appendChild(resultsH3);
-            
-            resultsParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                resultsSection.appendChild(p);
-            });
-            
-            container.appendChild(resultsSection);
-        }
-        
-        // Significance and Implications Section (third section)
-        const discussionStart = resultsEnd;
-        const discussionEnd = discussionStart + paragraphsPerSection + (remainder > 2 ? 1 : 0);
-        const discussionParagraphs = remainingParagraphs.slice(discussionStart, discussionEnd);
-        
-        if (discussionParagraphs.length > 0) {
-            const discussionSection = document.createElement('div');
-            discussionSection.className = 'summary-section';
-            const discussionH3 = document.createElement('h3');
-            discussionH3.textContent = 'Significance and Implications';
-            discussionSection.appendChild(discussionH3);
-            
-            discussionParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                discussionSection.appendChild(p);
-            });
-            
-            container.appendChild(discussionSection);
-        }
-        
-        // More Details Section (fourth section)
-        const detailsStart = discussionEnd;
-        const detailsEnd = detailsStart + paragraphsPerSection + (remainder > 3 ? 1 : 0);
-        const detailsParagraphs = remainingParagraphs.slice(detailsStart, detailsEnd);
-        
-        if (detailsParagraphs.length > 0) {
-            const detailsSection = document.createElement('div');
-            detailsSection.className = 'summary-section';
-            const detailsH3 = document.createElement('h3');
-            detailsH3.textContent = 'More Details';
-            detailsSection.appendChild(detailsH3);
-            
-            detailsParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                detailsSection.appendChild(p);
-            });
-            
-            container.appendChild(detailsSection);
-        }
-        
-        // Additional Context and Analysis Section (remaining paragraphs for maximum depth)
-        const additionalParagraphs = remainingParagraphs.slice(detailsEnd);
-        
-        if (additionalParagraphs.length > 0) {
-            const additionalSection = document.createElement('div');
-            additionalSection.className = 'summary-section';
-            const additionalH3 = document.createElement('h3');
-            additionalH3.textContent = 'Additional Context and Analysis';
-            additionalSection.appendChild(additionalH3);
-            
-            additionalParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                additionalSection.appendChild(p);
-            });
-            
-            container.appendChild(additionalSection);
-        }
-    } else if (totalRemaining >= 5) {
-        // Five to seven paragraphs: distribute across four sections including More Details
-        const paragraphsPerSection = Math.floor(totalRemaining / 4);
-        const remainder = totalRemaining % 4;
-        
+    if (remainingParagraphs.length >= 1) {
         // Key Concepts and Methods Section
-        const methodStart = 0;
-        const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
-        const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
-        
-        if (methodParagraphs.length > 0) {
-            const methodSection = document.createElement('div');
-            methodSection.className = 'summary-section';
-            const methodH3 = document.createElement('h3');
-            methodH3.textContent = 'Key Concepts and Methods';
-            methodSection.appendChild(methodH3);
-            
-            methodParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                methodSection.appendChild(p);
-            });
-            
-            container.appendChild(methodSection);
-        }
-        
-        // Important Information and Findings Section
-        const resultsStart = methodEnd;
-        const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
-        const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
-        
-        if (resultsParagraphs.length > 0) {
-            const resultsSection = document.createElement('div');
-            resultsSection.className = 'summary-section';
-            const resultsH3 = document.createElement('h3');
-            resultsH3.textContent = 'Important Information and Findings';
-            resultsSection.appendChild(resultsH3);
-            
-            resultsParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                resultsSection.appendChild(p);
-            });
-            
-            container.appendChild(resultsSection);
-        }
-        
-        // Significance and Implications Section
-        const discussionStart = resultsEnd;
-        const discussionEnd = discussionStart + paragraphsPerSection + (remainder > 2 ? 1 : 0);
-        const discussionParagraphs = remainingParagraphs.slice(discussionStart, discussionEnd);
-        
-        if (discussionParagraphs.length > 0) {
-            const discussionSection = document.createElement('div');
-            discussionSection.className = 'summary-section';
-            const discussionH3 = document.createElement('h3');
-            discussionH3.textContent = 'Significance and Implications';
-            discussionSection.appendChild(discussionH3);
-            
-            discussionParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                discussionSection.appendChild(p);
-            });
-            
-            container.appendChild(discussionSection);
-        }
-        
-        // More Details Section
-        const detailsParagraphs = remainingParagraphs.slice(discussionEnd);
-        
-        if (detailsParagraphs.length > 0) {
-            const detailsSection = document.createElement('div');
-            detailsSection.className = 'summary-section';
-            const detailsH3 = document.createElement('h3');
-            detailsH3.textContent = 'More Details';
-            detailsSection.appendChild(detailsH3);
-            
-            detailsParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                detailsSection.appendChild(p);
-            });
-            
-            container.appendChild(detailsSection);
-        }
-    } else if (totalRemaining >= 4) {
-        // Four paragraphs: distribute across three sections
-        const paragraphsPerSection = Math.floor(totalRemaining / 3);
-        const remainder = totalRemaining % 3;
-        
-        // Key Concepts and Methods Section
-        const methodStart = 0;
-        const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
-        const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
-        
-        if (methodParagraphs.length > 0) {
-            const methodSection = document.createElement('div');
-            methodSection.className = 'summary-section';
-            const methodH3 = document.createElement('h3');
-            methodH3.textContent = 'Key Concepts and Methods';
-            methodSection.appendChild(methodH3);
-            
-            methodParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                methodSection.appendChild(p);
-            });
-            
-            container.appendChild(methodSection);
-        }
-        
-        // Important Information and Findings Section
-        const resultsStart = methodEnd;
-        const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
-        const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
-        
-        if (resultsParagraphs.length > 0) {
-            const resultsSection = document.createElement('div');
-            resultsSection.className = 'summary-section';
-            const resultsH3 = document.createElement('h3');
-            resultsH3.textContent = 'Important Information and Findings';
-            resultsSection.appendChild(resultsH3);
-            
-            resultsParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                resultsSection.appendChild(p);
-            });
-            
-            container.appendChild(resultsSection);
-        }
-        
-        // Significance and Implications Section
-        const discussionParagraphs = remainingParagraphs.slice(resultsEnd);
-        
-        if (discussionParagraphs.length > 0) {
-            const discussionSection = document.createElement('div');
-            discussionSection.className = 'summary-section';
-            const discussionH3 = document.createElement('h3');
-            discussionH3.textContent = 'Significance and Implications';
-            discussionSection.appendChild(discussionH3);
-            
-            discussionParagraphs.forEach(para => {
-                const p = document.createElement('p');
-                p.textContent = para.trim();
-                discussionSection.appendChild(p);
-            });
-            
-            container.appendChild(discussionSection);
-        }
-    } else if (totalRemaining === 3) {
-        // Three paragraphs: one for each section
         const methodSection = document.createElement('div');
         methodSection.className = 'summary-section';
         const methodH3 = document.createElement('h3');
@@ -538,7 +359,10 @@ function formatSummaryAsResearchArticle(paragraphs, container) {
         methodP.textContent = remainingParagraphs[0].trim();
         methodSection.appendChild(methodP);
         container.appendChild(methodSection);
-        
+    }
+    
+    if (remainingParagraphs.length >= 2) {
+        // Important Information and Findings Section
         const resultsSection = document.createElement('div');
         resultsSection.className = 'summary-section';
         const resultsH3 = document.createElement('h3');
@@ -548,7 +372,10 @@ function formatSummaryAsResearchArticle(paragraphs, container) {
         resultsP.textContent = remainingParagraphs[1].trim();
         resultsSection.appendChild(resultsP);
         container.appendChild(resultsSection);
-        
+    }
+    
+    if (remainingParagraphs.length >= 3) {
+        // Significance and Implications Section
         const discussionSection = document.createElement('div');
         discussionSection.className = 'summary-section';
         const discussionH3 = document.createElement('h3');
@@ -558,38 +385,6 @@ function formatSummaryAsResearchArticle(paragraphs, container) {
         discussionP.textContent = remainingParagraphs[2].trim();
         discussionSection.appendChild(discussionP);
         container.appendChild(discussionSection);
-    } else if (totalRemaining === 2) {
-        // Two paragraphs: Key Concepts and Methods, Important Information and Findings
-        const methodSection = document.createElement('div');
-        methodSection.className = 'summary-section';
-        const methodH3 = document.createElement('h3');
-        methodH3.textContent = 'Key Concepts and Methods';
-        methodSection.appendChild(methodH3);
-        const methodP = document.createElement('p');
-        methodP.textContent = remainingParagraphs[0].trim();
-        methodSection.appendChild(methodP);
-        container.appendChild(methodSection);
-        
-        const resultsSection = document.createElement('div');
-        resultsSection.className = 'summary-section';
-        const resultsH3 = document.createElement('h3');
-        resultsH3.textContent = 'Important Information and Findings';
-        resultsSection.appendChild(resultsH3);
-        const resultsP = document.createElement('p');
-        resultsP.textContent = remainingParagraphs[1].trim();
-        resultsSection.appendChild(resultsP);
-        container.appendChild(resultsSection);
-    } else {
-        // One remaining paragraph: Key Concepts and Methods
-        const methodSection = document.createElement('div');
-        methodSection.className = 'summary-section';
-        const methodH3 = document.createElement('h3');
-        methodH3.textContent = 'Key Concepts and Methods';
-        methodSection.appendChild(methodH3);
-        const methodP = document.createElement('p');
-        methodP.textContent = remainingParagraphs[0].trim();
-        methodSection.appendChild(methodP);
-        container.appendChild(methodSection);
     }
 }
 
@@ -616,7 +411,10 @@ function displayArticle(data) {
     // Set summary with proper research article format
     if (data.extract) {
         // Split by double newlines to preserve paragraphs
-        const paragraphs = data.extract.split('\n\n').filter(p => p.trim().length > 0);
+        let paragraphs = data.extract.split('\n\n').filter(p => p.trim().length > 0);
+        
+        // Limit to maximum 4 paragraphs for a shorter, more concise summary
+        paragraphs = paragraphs.slice(0, 4);
         
         // Clear previous content
         articleSummary.innerHTML = '';

@@ -703,11 +703,14 @@
             if (paragraphs.length === 1) return;
             
             // Remaining paragraphs organized into research article sections
+            // Since we limit to 4 paragraphs max, we'll have at most 3 remaining
             let remainingParagraphs = paragraphs.slice(1);
             
-            // Determine how to distribute paragraphs across sections
-            // Format: Introduction, Key Concepts and Methods, Important Information and Findings, Significance and Implications
-            const totalRemaining = remainingParagraphs.length;
+            // Simplified logic for shorter summaries (max 4 paragraphs total)
+            // 1 paragraph: Introduction only (already done)
+            // 2 paragraphs: Introduction + Key Concepts
+            // 3 paragraphs: Introduction + Key Concepts + Important Information
+            // 4 paragraphs: Introduction + Key Concepts + Important Information + Significance
             
             if (totalRemaining >= 8) {
                 // Eight or more paragraphs: distribute across five sections for maximum depth
@@ -908,67 +911,6 @@
                 const remainder = totalRemaining % 3;
                 
                 // Key Concepts and Methods Section
-                const methodStart = 0;
-                const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
-                const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
-                
-                if (methodParagraphs.length > 0) {
-                    const methodSection = document.createElement('div');
-                    methodSection.className = 'summary-section';
-                    const methodH3 = document.createElement('h3');
-                    methodH3.textContent = 'Key Concepts and Methods';
-                    methodSection.appendChild(methodH3);
-                    
-                    methodParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        methodSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(methodSection);
-                }
-                
-                // Important Information and Findings Section
-                const resultsStart = methodEnd;
-                const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
-                const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
-                
-                if (resultsParagraphs.length > 0) {
-                    const resultsSection = document.createElement('div');
-                    resultsSection.className = 'summary-section';
-                    const resultsH3 = document.createElement('h3');
-                    resultsH3.textContent = 'Important Information and Findings';
-                    resultsSection.appendChild(resultsH3);
-                    
-                    resultsParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        resultsSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(resultsSection);
-                }
-                
-                // Significance and Implications Section
-                const discussionParagraphs = remainingParagraphs.slice(resultsEnd);
-                
-                if (discussionParagraphs.length > 0) {
-                    const discussionSection = document.createElement('div');
-                    discussionSection.className = 'summary-section';
-                    const discussionH3 = document.createElement('h3');
-                    discussionH3.textContent = 'Significance and Implications';
-                    discussionSection.appendChild(discussionH3);
-                    
-                    discussionParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        discussionSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(discussionSection);
-                }
-            } else if (totalRemaining === 3) {
-                // Three paragraphs: one for each section
                 const methodSection = document.createElement('div');
                 methodSection.className = 'summary-section';
                 const methodH3 = document.createElement('h3');
@@ -978,7 +920,10 @@
                 methodP.textContent = remainingParagraphs[0].trim();
                 methodSection.appendChild(methodP);
                 container.appendChild(methodSection);
-                
+            }
+            
+            if (remainingParagraphs.length >= 2) {
+                // Important Information and Findings Section
                 const resultsSection = document.createElement('div');
                 resultsSection.className = 'summary-section';
                 const resultsH3 = document.createElement('h3');
@@ -988,7 +933,10 @@
                 resultsP.textContent = remainingParagraphs[1].trim();
                 resultsSection.appendChild(resultsP);
                 container.appendChild(resultsSection);
-                
+            }
+            
+            if (remainingParagraphs.length >= 3) {
+                // Significance and Implications Section
                 const discussionSection = document.createElement('div');
                 discussionSection.className = 'summary-section';
                 const discussionH3 = document.createElement('h3');
@@ -998,38 +946,6 @@
                 discussionP.textContent = remainingParagraphs[2].trim();
                 discussionSection.appendChild(discussionP);
                 container.appendChild(discussionSection);
-            } else if (totalRemaining === 2) {
-                // Two paragraphs: Key Concepts and Methods, Important Information and Findings
-                const methodSection = document.createElement('div');
-                methodSection.className = 'summary-section';
-                const methodH3 = document.createElement('h3');
-                methodH3.textContent = 'Key Concepts and Methods';
-                methodSection.appendChild(methodH3);
-                const methodP = document.createElement('p');
-                methodP.textContent = remainingParagraphs[0].trim();
-                methodSection.appendChild(methodP);
-                container.appendChild(methodSection);
-                
-                const resultsSection = document.createElement('div');
-                resultsSection.className = 'summary-section';
-                const resultsH3 = document.createElement('h3');
-                resultsH3.textContent = 'Important Information and Findings';
-                resultsSection.appendChild(resultsH3);
-                const resultsP = document.createElement('p');
-                resultsP.textContent = remainingParagraphs[1].trim();
-                resultsSection.appendChild(resultsP);
-                container.appendChild(resultsSection);
-            } else {
-                // One remaining paragraph: Key Concepts and Methods
-                const methodSection = document.createElement('div');
-                methodSection.className = 'summary-section';
-                const methodH3 = document.createElement('h3');
-                methodH3.textContent = 'Key Concepts and Methods';
-                methodSection.appendChild(methodH3);
-                const methodP = document.createElement('p');
-                methodP.textContent = remainingParagraphs[0].trim();
-                methodSection.appendChild(methodP);
-                container.appendChild(methodSection);
             }
         }
 
@@ -1060,7 +976,10 @@
                 let content = data.extract;
                 
                 // Split into paragraphs, preserving section structure
-                const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
+                let paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
+                
+                // Limit to maximum 4 paragraphs for a shorter, more concise summary
+                paragraphs = paragraphs.slice(0, 4);
                 
                 // Clear previous content
                 articleSummary.innerHTML = '';
