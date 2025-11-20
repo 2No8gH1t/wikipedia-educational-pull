@@ -401,7 +401,7 @@
     <div class="container">
         <header>
             <h1>Random Educational Wikipedia</h1>
-            <p class="subtitle">Discover something new every time</p>
+            <p class="subtitle">Discover how things are made and created</p>
         </header>
         
         <main>
@@ -450,56 +450,87 @@
         const lastModified = document.getElementById('lastModified');
         const errorMessage = document.getElementById('errorMessage');
 
-        // List of educational categories to filter random articles
+        // List of educational categories focused on creation, manufacturing, and processes
         const educationalCategories = [
-            'Education',
-            'Science',
-            'History',
-            'Mathematics',
-            'Physics',
-            'Chemistry',
-            'Biology',
-            'Geography',
-            'Literature',
-            'Philosophy',
-            'Technology',
-            'Medicine',
+            'Invention',
+            'Innovation',
+            'Manufacturing',
+            'Production',
             'Engineering',
+            'Technology',
+            'Construction',
+            'Craft',
+            'Technique',
+            'Method',
+            'Process',
+            'Science',
+            'Chemistry',
+            'Physics',
+            'Biology',
+            'Mathematics',
+            'Architecture',
+            'Design',
             'Art',
             'Music',
-            'Architecture',
-            'Astronomy',
-            'Psychology',
-            'Sociology',
-            'Anthropology',
-            'Economics',
-            'Political Science',
-            'Linguistics',
+            'Literature',
+            'Culinary Arts',
+            'Photography',
+            'Film',
+            'Theater',
+            'Dance',
+            'Fashion',
+            'Textile',
+            'Metallurgy',
+            'Ceramics',
+            'Glassmaking',
+            'Printing',
+            'Paper',
+            'Agriculture',
+            'Food Processing',
+            'Brewing',
+            'Distillation',
+            'Fermentation',
+            'Industrial Revolution',
+            'Space Exploration',
+            'Computer Science',
+            'Software Development',
+            'Mechanical Engineering',
+            'Electrical Engineering',
+            'Civil Engineering',
+            'Chemical Engineering',
+            'Materials Science',
+            'Nanotechnology',
+            'Biotechnology',
+            'Genetics',
             'Archaeology',
+            'Paleontology',
             'Geology',
-            'Meteorology',
+            'Astronomy',
+            'Astrophysics',
             'Oceanography',
+            'Meteorology',
             'Botany',
             'Zoology',
-            'Neuroscience',
-            'Computer Science',
             'Environmental Science',
-            'Astrophysics',
-            'Biochemistry',
-            'Genetics',
-            'Paleontology',
+            'History',
+            'Ancient History',
+            'Medieval History',
+            'Renaissance',
+            'Geography',
+            'Economics',
+            'Business',
+            'Finance',
+            'Marketing',
+            'Philosophy',
             'Theology',
             'Mythology',
             'Classical Studies',
             'Cultural Studies',
-            'Film Studies',
-            'Theater',
-            'Dance',
-            'Photography',
-            'Design',
-            'Fashion',
-            'Culinary Arts',
-            'Sports Science',
+            'Linguistics',
+            'Psychology',
+            'Sociology',
+            'Anthropology',
+            'Medicine',
             'Public Health',
             'Epidemiology',
             'Veterinary Medicine',
@@ -507,29 +538,17 @@
             'Nursing',
             'Pharmacy',
             'Law',
-            'Business',
-            'Finance',
-            'Marketing',
             'Journalism',
             'Communication',
             'Media Studies',
             'International Relations',
             'Military History',
             'World War',
-            'Ancient History',
-            'Medieval History',
-            'Renaissance',
-            'Industrial Revolution',
-            'Space Exploration',
-            'Invention',
-            'Innovation',
-            'Biography',
-            'Autobiography',
-            'Memoir'
+            'Education'
         ];
 
         let attemptCount = 0;
-        const maxAttempts = 1; // Only 1 retry for maximum speed
+        const maxAttempts = 3; // Allow more retries to find articles about creation/processes
 
         async function fetchRandomArticle() {
             // Show loading state
@@ -657,7 +676,7 @@
         }
 
         function checkIfEducational(data) {
-            // More comprehensive check using the educational categories list
+            // Check if article is about creation, manufacturing, or processes
             const text = (data.title + ' ' + (data.extract || '')).toLowerCase();
             
             // Only reject if it's clearly not educational (disambiguation, very short, etc.)
@@ -680,8 +699,195 @@
             // Also reject if extract is too short (likely a stub)
             const isTooShort = !data.extract || data.extract.length < 100;
             
-            // Accept almost everything - only reject obvious non-content pages
+            // Reject biographical articles about specific individuals
+            const isBiographical = checkIfBiographical(data);
+            
+            // Prefer articles about creation, manufacturing, processes, and how things work
+            const isAboutCreation = checkIfAboutCreation(data);
+            
+            // Reject if it's a biography, but accept if it's about creation/processes
+            // If it's not about creation and is biographical, reject it
+            if (isBiographical && !isAboutCreation) {
+                return true;
+            }
+            
+            // Accept almost everything - only reject obvious non-content pages and biographies
             return shouldReject || (isTooShort && attemptCount === 0);
+        }
+
+        function checkIfBiographical(data) {
+            // Check if the article is about a specific individual (biography)
+            const title = data.title;
+            const extract = (data.extract || '').toLowerCase();
+            const fullText = (title + ' ' + extract).toLowerCase();
+            
+            // Biographical indicators in the content
+            const biographicalIndicators = [
+                'was born',
+                'was an',
+                'is an',
+                'is a',
+                'born in',
+                'died in',
+                'died on',
+                'lived from',
+                'was a',
+                'is known for',
+                'was known for',
+                'was the',
+                'is the',
+                'served as',
+                'worked as',
+                'attended',
+                'graduated from',
+                'married',
+                'had children',
+                'was married to',
+                'was the son of',
+                'was the daughter of',
+                'was born to',
+                'grew up in',
+                'studied at',
+                'received',
+                'won the',
+                'awarded',
+                'career',
+                'early life',
+                'personal life',
+                'later life',
+                'death',
+                'legacy'
+            ];
+            
+            // Check if extract contains multiple biographical indicators (likely a biography)
+            const biographicalCount = biographicalIndicators.filter(indicator => 
+                extract.includes(indicator)
+            ).length;
+            
+            // If 3 or more biographical indicators, it's likely a biography
+            if (biographicalCount >= 3) {
+                return true;
+            }
+            
+            // Check if title looks like a person's name (First Last format, but not common phrases)
+            // Simple heuristic: if title has 2-4 words and extract starts with biographical language
+            const titleWords = title.split(' ').filter(w => w.length > 0);
+            const looksLikeName = titleWords.length >= 2 && titleWords.length <= 4;
+            
+            // If it looks like a name AND has biographical content, reject it
+            if (looksLikeName && biographicalCount >= 2) {
+                return true;
+            }
+            
+            // Check for very strong biographical opening (most biographies start this way)
+            const strongBiographicalStart = extract.match(/^(was|is|born|died|lived|served|worked|studied|received|won|awarded)/);
+            if (strongBiographicalStart && looksLikeName) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        function checkIfAboutCreation(data) {
+            // Check if the article is about creation, manufacturing, processes, or how things are made
+            const title = data.title.toLowerCase();
+            const extract = (data.extract || '').toLowerCase();
+            const fullText = (title + ' ' + extract).toLowerCase();
+            
+            // Keywords related to creation, manufacturing, and processes
+            const creationKeywords = [
+                'how',
+                'made',
+                'created',
+                'manufactured',
+                'produced',
+                'constructed',
+                'built',
+                'designed',
+                'developed',
+                'invented',
+                'process',
+                'method',
+                'technique',
+                'procedure',
+                'production',
+                'manufacturing',
+                'fabrication',
+                'assembly',
+                'construction',
+                'creation',
+                'formation',
+                'synthesis',
+                'preparation',
+                'making',
+                'building',
+                'crafting',
+                'engineering',
+                'technology',
+                'mechanism',
+                'system',
+                'works',
+                'operates',
+                'functions',
+                'works by',
+                'created by',
+                'made from',
+                'produced by',
+                'manufacturing process',
+                'production process',
+                'creation process',
+                'how it works',
+                'how to make',
+                'how to create',
+                'how to build',
+                'how to produce',
+                'technique for',
+                'method of',
+                'process of',
+                'way to',
+                'steps to',
+                'procedure for'
+            ];
+            
+            // Count how many creation-related keywords appear
+            const creationCount = creationKeywords.filter(keyword => 
+                fullText.includes(keyword)
+            ).length;
+            
+            // If 2 or more creation keywords, it's likely about creation/processes
+            if (creationCount >= 2) {
+                return true;
+            }
+            
+            // Check title for creation-related terms
+            const titleCreationTerms = [
+                'manufacturing',
+                'production',
+                'process',
+                'technique',
+                'method',
+                'construction',
+                'creation',
+                'making',
+                'how',
+                'invention',
+                'innovation',
+                'engineering',
+                'design',
+                'craft',
+                'art',
+                'technology'
+            ];
+            
+            const titleHasCreationTerm = titleCreationTerms.some(term => 
+                title.includes(term)
+            );
+            
+            if (titleHasCreationTerm) {
+                return true;
+            }
+            
+            return false;
         }
 
         function formatSummaryAsResearchArticle(paragraphs, container) {
@@ -712,209 +918,12 @@
             // 3 paragraphs: Introduction + Key Concepts + Important Information
             // 4 paragraphs: Introduction + Key Concepts + Important Information + Significance
             
-            if (totalRemaining >= 8) {
-                // Eight or more paragraphs: distribute across five sections for maximum depth
-                const paragraphsPerSection = Math.floor(totalRemaining / 5);
-                const remainder = totalRemaining % 5;
-                
-                // Key Concepts and Methods Section (first section)
-                const methodStart = 0;
-                const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
-                const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
-                
-                if (methodParagraphs.length > 0) {
-                    const methodSection = document.createElement('div');
-                    methodSection.className = 'summary-section';
-                    const methodH3 = document.createElement('h3');
-                    methodH3.textContent = 'Key Concepts and Methods';
-                    methodSection.appendChild(methodH3);
-                    
-                    methodParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        methodSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(methodSection);
-                }
-                
-                // Important Information and Findings Section (second section)
-                const resultsStart = methodEnd;
-                const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
-                const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
-                
-                if (resultsParagraphs.length > 0) {
-                    const resultsSection = document.createElement('div');
-                    resultsSection.className = 'summary-section';
-                    const resultsH3 = document.createElement('h3');
-                    resultsH3.textContent = 'Important Information and Findings';
-                    resultsSection.appendChild(resultsH3);
-                    
-                    resultsParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        resultsSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(resultsSection);
-                }
-                
-                // Significance and Implications Section (third section)
-                const discussionStart = resultsEnd;
-                const discussionEnd = discussionStart + paragraphsPerSection + (remainder > 2 ? 1 : 0);
-                const discussionParagraphs = remainingParagraphs.slice(discussionStart, discussionEnd);
-                
-                if (discussionParagraphs.length > 0) {
-                    const discussionSection = document.createElement('div');
-                    discussionSection.className = 'summary-section';
-                    const discussionH3 = document.createElement('h3');
-                    discussionH3.textContent = 'Significance and Implications';
-                    discussionSection.appendChild(discussionH3);
-                    
-                    discussionParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        discussionSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(discussionSection);
-                }
-                
-                // More Details Section (fourth section)
-                const detailsStart = discussionEnd;
-                const detailsEnd = detailsStart + paragraphsPerSection + (remainder > 3 ? 1 : 0);
-                const detailsParagraphs = remainingParagraphs.slice(detailsStart, detailsEnd);
-                
-                if (detailsParagraphs.length > 0) {
-                    const detailsSection = document.createElement('div');
-                    detailsSection.className = 'summary-section';
-                    const detailsH3 = document.createElement('h3');
-                    detailsH3.textContent = 'More Details';
-                    detailsSection.appendChild(detailsH3);
-                    
-                    detailsParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        detailsSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(detailsSection);
-                }
-                
-                // Additional Context and Analysis Section (remaining paragraphs for maximum depth)
-                const additionalParagraphs = remainingParagraphs.slice(detailsEnd);
-                
-                if (additionalParagraphs.length > 0) {
-                    const additionalSection = document.createElement('div');
-                    additionalSection.className = 'summary-section';
-                    const additionalH3 = document.createElement('h3');
-                    additionalH3.textContent = 'Additional Context and Analysis';
-                    additionalSection.appendChild(additionalH3);
-                    
-                    additionalParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        additionalSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(additionalSection);
-                }
-            } else if (totalRemaining >= 5) {
-                // Five to seven paragraphs: distribute across four sections including More Details
-                const paragraphsPerSection = Math.floor(totalRemaining / 4);
-                const remainder = totalRemaining % 4;
-                
-                // Key Concepts and Methods Section
-                const methodStart = 0;
-                const methodEnd = paragraphsPerSection + (remainder > 0 ? 1 : 0);
-                const methodParagraphs = remainingParagraphs.slice(methodStart, methodEnd);
-                
-                if (methodParagraphs.length > 0) {
-                    const methodSection = document.createElement('div');
-                    methodSection.className = 'summary-section';
-                    const methodH3 = document.createElement('h3');
-                    methodH3.textContent = 'Key Concepts and Methods';
-                    methodSection.appendChild(methodH3);
-                    
-                    methodParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        methodSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(methodSection);
-                }
-                
-                // Important Information and Findings Section
-                const resultsStart = methodEnd;
-                const resultsEnd = resultsStart + paragraphsPerSection + (remainder > 1 ? 1 : 0);
-                const resultsParagraphs = remainingParagraphs.slice(resultsStart, resultsEnd);
-                
-                if (resultsParagraphs.length > 0) {
-                    const resultsSection = document.createElement('div');
-                    resultsSection.className = 'summary-section';
-                    const resultsH3 = document.createElement('h3');
-                    resultsH3.textContent = 'Important Information and Findings';
-                    resultsSection.appendChild(resultsH3);
-                    
-                    resultsParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        resultsSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(resultsSection);
-                }
-                
-                // Significance and Implications Section
-                const discussionStart = resultsEnd;
-                const discussionEnd = discussionStart + paragraphsPerSection + (remainder > 2 ? 1 : 0);
-                const discussionParagraphs = remainingParagraphs.slice(discussionStart, discussionEnd);
-                
-                if (discussionParagraphs.length > 0) {
-                    const discussionSection = document.createElement('div');
-                    discussionSection.className = 'summary-section';
-                    const discussionH3 = document.createElement('h3');
-                    discussionH3.textContent = 'Significance and Implications';
-                    discussionSection.appendChild(discussionH3);
-                    
-                    discussionParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        discussionSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(discussionSection);
-                }
-                
-                // More Details Section
-                const detailsParagraphs = remainingParagraphs.slice(discussionEnd);
-                
-                if (detailsParagraphs.length > 0) {
-                    const detailsSection = document.createElement('div');
-                    detailsSection.className = 'summary-section';
-                    const detailsH3 = document.createElement('h3');
-                    detailsH3.textContent = 'More Details';
-                    detailsSection.appendChild(detailsH3);
-                    
-                    detailsParagraphs.forEach(para => {
-                        const p = document.createElement('p');
-                        p.textContent = para.trim();
-                        detailsSection.appendChild(p);
-                    });
-                    
-                    container.appendChild(detailsSection);
-                }
-            } else if (totalRemaining >= 4) {
-                // Four paragraphs: distribute across three sections
-                const paragraphsPerSection = Math.floor(totalRemaining / 3);
-                const remainder = totalRemaining % 3;
-                
-                // Key Concepts and Methods Section
+            if (remainingParagraphs.length >= 1) {
+                // Creation Process and Methods Section
                 const methodSection = document.createElement('div');
                 methodSection.className = 'summary-section';
                 const methodH3 = document.createElement('h3');
-                methodH3.textContent = 'Key Concepts and Methods';
+                methodH3.textContent = 'How It Is Made or Created';
                 methodSection.appendChild(methodH3);
                 const methodP = document.createElement('p');
                 methodP.textContent = remainingParagraphs[0].trim();
@@ -923,11 +932,11 @@
             }
             
             if (remainingParagraphs.length >= 2) {
-                // Important Information and Findings Section
+                // Materials, Techniques, and Process Details Section
                 const resultsSection = document.createElement('div');
                 resultsSection.className = 'summary-section';
                 const resultsH3 = document.createElement('h3');
-                resultsH3.textContent = 'Important Information and Findings';
+                resultsH3.textContent = 'Materials, Techniques, and Process Details';
                 resultsSection.appendChild(resultsH3);
                 const resultsP = document.createElement('p');
                 resultsP.textContent = remainingParagraphs[1].trim();
@@ -936,11 +945,11 @@
             }
             
             if (remainingParagraphs.length >= 3) {
-                // Significance and Implications Section
+                // Historical Development and Significance Section
                 const discussionSection = document.createElement('div');
                 discussionSection.className = 'summary-section';
                 const discussionH3 = document.createElement('h3');
-                discussionH3.textContent = 'Significance and Implications';
+                discussionH3.textContent = 'Historical Development and Significance';
                 discussionSection.appendChild(discussionH3);
                 const discussionP = document.createElement('p');
                 discussionP.textContent = remainingParagraphs[2].trim();
