@@ -452,13 +452,10 @@
 
         // List of high-level educational categories focused on science, engineering, and complex systems
         const educationalCategories = [
-            'Invention',
             'Innovation',
             'Manufacturing',
-            'Production',
             'Engineering',
             'Technology',
-            'Construction',
             'Science',
             'Chemistry',
             'Physics',
@@ -466,11 +463,7 @@
             'Mathematics',
             'Architecture',
             'Metallurgy',
-            'Printing',
-            'Industrial Revolution',
-            'Space Exploration',
             'Computer Science',
-            'Software Development',
             'Mechanical Engineering',
             'Electrical Engineering',
             'Civil Engineering',
@@ -486,8 +479,6 @@
             'Astrophysics',
             'Oceanography',
             'Meteorology',
-            'Botany',
-            'Zoology',
             'Environmental Science',
             'Economics',
             'Philosophy',
@@ -498,11 +489,15 @@
             'Medicine',
             'Epidemiology',
             'Law',
-            'International Relations',
             'Military History',
-            'Theory',
             'System',
-            'Methodology'
+            'Methodology',
+            'Epistemology',
+            'Thermodynamics',
+            'Quantum Mechanics',
+            'Cybernetics',
+            'Logic',
+            'Ethics'
         ];
 
         let attemptCount = 0;
@@ -699,7 +694,10 @@
                 'genetic', 'computational', 'archaeological', 'sociological', 'economic',
                 'philosophical', 'paradigm', 'spectrum', 'dimension', 'velocity',
                 'magnitude', 'equilibrium', 'correlation', 'variable', 'function',
-                'derivative', 'integral', 'optimization', 'protocol', 'architecture'
+                'derivative', 'integral', 'optimization', 'protocol', 'architecture',
+                'epistemology', 'historiography', 'cybernetics', 'macroeconomics',
+                'microeconomics', 'geopolitics', 'jurisprudence', 'criminology',
+                'neurology', 'pathology', 'immunology', 'seismology', 'cosmology'
             ];
             
             // Check for at least one complexity keyword
@@ -789,57 +787,25 @@
             
             // Keywords related to creation, manufacturing, and processes
             const creationKeywords = [
-                'how',
-                'made',
-                'created',
                 'manufactured',
-                'produced',
                 'constructed',
-                'built',
-                'designed',
-                'developed',
-                'invented',
-                'process',
-                'method',
-                'technique',
-                'procedure',
-                'production',
-                'manufacturing',
-                'fabrication',
+                'engineered',
+                'synthesized',
+                'fabricated',
                 'assembly',
-                'construction',
-                'creation',
-                'formation',
-                'synthesis',
-                'preparation',
-                'making',
-                'building',
-                'crafting',
-                'engineering',
-                'technology',
-                'mechanism',
-                'system',
-                'works',
-                'operates',
-                'functions',
-                'works by',
-                'created by',
-                'made from',
-                'produced by',
-                'manufacturing process',
                 'production process',
-                'creation process',
-                'how it works',
-                'how to make',
-                'how to create',
-                'how to build',
-                'how to produce',
-                'technique for',
-                'method of',
-                'process of',
-                'way to',
-                'steps to',
-                'procedure for'
+                'manufacturing process',
+                'fabrication technique',
+                'construction method',
+                'synthesis of',
+                'preparation of',
+                'algorithm for',
+                'mechanism of',
+                'protocol for',
+                'procedure for',
+                'methodology',
+                'system architecture',
+                'design pattern'
             ];
             
             // Count how many creation-related keywords appear
@@ -847,8 +813,8 @@
                 fullText.includes(keyword)
             ).length;
             
-            // If 2 or more creation keywords, it's likely about creation/processes
-            if (creationCount >= 2) {
+            // If 1 or more strict creation keywords, it's likely about creation/processes
+            if (creationCount >= 1) {
                 return true;
             }
             
@@ -860,16 +826,10 @@
                 'technique',
                 'method',
                 'construction',
-                'creation',
-                'making',
-                'how',
-                'invention',
-                'innovation',
-                'engineering',
-                'design',
-                'craft',
-                'art',
-                'technology'
+                'synthesis',
+                'algorithm',
+                'protocol',
+                'mechanism'
             ];
             
             const titleHasCreationTerm = titleCreationTerms.some(term => 
@@ -883,7 +843,7 @@
             return false;
         }
 
-        function formatSummaryAsResearchArticle(paragraphs, container) {
+        function formatSummaryAsResearchArticle(paragraphs, container, isCreation, isHighLevel) {
             if (paragraphs.length === 0) return;
             
             // Introduction Section - State what the topic is and why it's interesting
@@ -905,18 +865,29 @@
             // Since we limit to 4 paragraphs max, we'll have at most 3 remaining
             let remainingParagraphs = paragraphs.slice(1);
             
-            // Simplified logic for shorter summaries (max 4 paragraphs total)
-            // 1 paragraph: Introduction only (already done)
-            // 2 paragraphs: Introduction + Key Concepts
-            // 3 paragraphs: Introduction + Key Concepts + Important Information
-            // 4 paragraphs: Introduction + Key Concepts + Important Information + Significance
+            // Define headers based on content type
+            let headers = [];
             
+            if (isCreation) {
+                headers = [
+                    'How It Is Made or Created',
+                    'Materials, Techniques, and Process Details',
+                    'Historical Development and Significance'
+                ];
+            } else {
+                // Default for concepts/theories
+                headers = [
+                    'Core Concepts and Methodology',
+                    'Analysis and Theoretical Framework',
+                    'Implications and Significance'
+                ];
+            }
+
             if (remainingParagraphs.length >= 1) {
-                // Creation Process and Methods Section
                 const methodSection = document.createElement('div');
                 methodSection.className = 'summary-section';
                 const methodH3 = document.createElement('h3');
-                methodH3.textContent = 'How It Is Made or Created';
+                methodH3.textContent = headers[0];
                 methodSection.appendChild(methodH3);
                 const methodP = document.createElement('p');
                 methodP.textContent = remainingParagraphs[0].trim();
@@ -925,11 +896,10 @@
             }
             
             if (remainingParagraphs.length >= 2) {
-                // Materials, Techniques, and Process Details Section
                 const resultsSection = document.createElement('div');
                 resultsSection.className = 'summary-section';
                 const resultsH3 = document.createElement('h3');
-                resultsH3.textContent = 'Materials, Techniques, and Process Details';
+                resultsH3.textContent = headers[1];
                 resultsSection.appendChild(resultsH3);
                 const resultsP = document.createElement('p');
                 resultsP.textContent = remainingParagraphs[1].trim();
@@ -938,11 +908,10 @@
             }
             
             if (remainingParagraphs.length >= 3) {
-                // Historical Development and Significance Section
                 const discussionSection = document.createElement('div');
                 discussionSection.className = 'summary-section';
                 const discussionH3 = document.createElement('h3');
-                discussionH3.textContent = 'Historical Development and Significance';
+                discussionH3.textContent = headers[2];
                 discussionSection.appendChild(discussionH3);
                 const discussionP = document.createElement('p');
                 discussionP.textContent = remainingParagraphs[2].trim();
@@ -987,7 +956,10 @@
                 articleSummary.innerHTML = '';
                 
                 // Format the summary following research article structure with more depth
-                formatSummaryAsResearchArticle(paragraphs, articleSummary);
+                // Determine content type for headers
+                const isCreation = checkIfAboutCreation(data);
+                const isHighLevel = checkIfHighLevel(data);
+                formatSummaryAsResearchArticle(paragraphs, articleSummary, isCreation, isHighLevel);
             } else {
                 articleSummary.innerHTML = '<p>No summary available for this article.</p>';
             }
