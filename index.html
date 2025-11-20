@@ -401,7 +401,7 @@
     <div class="container">
         <header>
             <h1>Random Educational Wikipedia</h1>
-            <p class="subtitle">Discover how things are made and created</p>
+            <p class="subtitle">Discover complex systems, engineering, and scientific processes</p>
         </header>
         
         <main>
@@ -450,7 +450,7 @@
         const lastModified = document.getElementById('lastModified');
         const errorMessage = document.getElementById('errorMessage');
 
-        // List of educational categories focused on creation, manufacturing, and processes
+        // List of high-level educational categories focused on science, engineering, and complex systems
         const educationalCategories = [
             'Invention',
             'Innovation',
@@ -459,37 +459,14 @@
             'Engineering',
             'Technology',
             'Construction',
-            'Craft',
-            'Technique',
-            'Method',
-            'Process',
             'Science',
             'Chemistry',
             'Physics',
             'Biology',
             'Mathematics',
             'Architecture',
-            'Design',
-            'Art',
-            'Music',
-            'Literature',
-            'Culinary Arts',
-            'Photography',
-            'Film',
-            'Theater',
-            'Dance',
-            'Fashion',
-            'Textile',
             'Metallurgy',
-            'Ceramics',
-            'Glassmaking',
             'Printing',
-            'Paper',
-            'Agriculture',
-            'Food Processing',
-            'Brewing',
-            'Distillation',
-            'Fermentation',
             'Industrial Revolution',
             'Space Exploration',
             'Computer Science',
@@ -512,43 +489,24 @@
             'Botany',
             'Zoology',
             'Environmental Science',
-            'History',
-            'Ancient History',
-            'Medieval History',
-            'Renaissance',
-            'Geography',
             'Economics',
-            'Business',
-            'Finance',
-            'Marketing',
             'Philosophy',
-            'Theology',
-            'Mythology',
-            'Classical Studies',
-            'Cultural Studies',
             'Linguistics',
             'Psychology',
             'Sociology',
             'Anthropology',
             'Medicine',
-            'Public Health',
             'Epidemiology',
-            'Veterinary Medicine',
-            'Dentistry',
-            'Nursing',
-            'Pharmacy',
             'Law',
-            'Journalism',
-            'Communication',
-            'Media Studies',
             'International Relations',
             'Military History',
-            'World War',
-            'Education'
+            'Theory',
+            'System',
+            'Methodology'
         ];
 
         let attemptCount = 0;
-        const maxAttempts = 3; // Allow more retries to find articles about creation/processes
+        const maxAttempts = 5; // Allow more retries to find high-level articles
 
         async function fetchRandomArticle() {
             // Show loading state
@@ -676,7 +634,7 @@
         }
 
         function checkIfEducational(data) {
-            // Check if article is about creation, manufacturing, or processes
+            // Check if article is about high-level creation, manufacturing, or processes
             const text = (data.title + ' ' + (data.extract || '')).toLowerCase();
             
             // Only reject if it's clearly not educational (disambiguation, very short, etc.)
@@ -696,23 +654,58 @@
                 data.title.toLowerCase().includes(pattern)
             );
             
-            // Also reject if extract is too short (likely a stub)
-            const isTooShort = !data.extract || data.extract.length < 100;
+            // Reject if extract is too short - High level content is usually longer
+            // Increased from 100 to 400 characters to ensure substance
+            const isTooShort = !data.extract || data.extract.length < 400;
             
             // Reject biographical articles about specific individuals
             const isBiographical = checkIfBiographical(data);
             
+            // Check for complexity/high-level markers
+            const isHighLevel = checkIfHighLevel(data);
+            
             // Prefer articles about creation, manufacturing, processes, and how things work
             const isAboutCreation = checkIfAboutCreation(data);
             
-            // Reject if it's a biography, but accept if it's about creation/processes
-            // If it's not about creation and is biographical, reject it
-            if (isBiographical && !isAboutCreation) {
+            // Reject logic:
+            // 1. Reject standard patterns (disambiguation, etc.)
+            // 2. Reject if too short (stubs)
+            // 3. Reject if biographical (unless it's a key creator of a system/process, but we filter strictly now)
+            // 4. Reject if not "high level" enough (simple topics)
+            
+            if (shouldReject || (isTooShort && attemptCount < 2) || isBiographical) {
                 return true;
             }
             
-            // Accept almost everything - only reject obvious non-content pages and biographies
-            return shouldReject || (isTooShort && attemptCount === 0);
+            // If it's about creation/processes OR it's high-level academic, we accept it
+            // But if it lacks complexity markers, we might skip it in early attempts
+            if (!isHighLevel && !isAboutCreation && attemptCount < 1) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        function checkIfHighLevel(data) {
+            const text = (data.title + ' ' + (data.extract || '')).toLowerCase();
+            
+            // Keywords indicating academic/technical/systemic complexity
+            const complexityKeywords = [
+                'theory', 'principle', 'mechanism', 'system', 'structure',
+                'analysis', 'concept', 'development', 'evolution', 'phenomenon',
+                'methodology', 'classification', 'taxonomy', 'equation', 'theorem',
+                'algorithm', 'infrastructure', 'framework', 'hypothesis', 'synthesis',
+                'thermodynamics', 'mechanics', 'quantum', 'relativity', 'molecular',
+                'genetic', 'computational', 'archaeological', 'sociological', 'economic',
+                'philosophical', 'paradigm', 'spectrum', 'dimension', 'velocity',
+                'magnitude', 'equilibrium', 'correlation', 'variable', 'function',
+                'derivative', 'integral', 'optimization', 'protocol', 'architecture'
+            ];
+            
+            // Check for at least one complexity keyword
+            const hasComplexity = complexityKeywords.some(keyword => text.includes(keyword));
+            
+            return hasComplexity;
         }
 
         function checkIfBiographical(data) {
